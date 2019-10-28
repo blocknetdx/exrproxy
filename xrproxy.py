@@ -236,7 +236,7 @@ def call_url(xrfunc, params, env):
         'XR-Pubkey': str(env.get('HTTP_XR_PUBKEY', b'')),
         'XR-Signature': str(env.get('HTTP_XR_SIGNATURE', b'')),
     }
-    payload = '' if len(params) > 0 else json.dumps(params)
+    payload = '' if len(params) == 0 else json.dumps(params)
 
     try:
         res = requests.post(rpcurl, headers=headers, data=payload)
