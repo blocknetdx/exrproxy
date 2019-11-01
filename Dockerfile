@@ -14,12 +14,13 @@ RUN apt update \
      wget curl git python3 vim \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+COPY requirements.txt /opt/requirements.txt
+
 RUN apt update \
   && apt install -y --no-install-recommends \
      supervisor build-essential libssl-dev \
      python3-dev python3-pip python3-setuptools \
-  && pip3 install wheel requests --upgrade \
-  && pip3 install uwsgi \
+  && pip3 install -r /opt/requirements.txt \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Setup uwsgi dir and bitcoin lib
