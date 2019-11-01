@@ -235,6 +235,7 @@ def call_url(xrfunc, params, env):
         'Content-Type': 'application/json',
         'XR-Pubkey': str(env.get('HTTP_XR_PUBKEY', b'')),
         'XR-Signature': str(env.get('HTTP_XR_SIGNATURE', b'')),
+        'XR-Payment': str(env.get('HTTP_XR_PAYMENT', b'')),
     }
     payload = '' if len(params) == 0 else json.dumps(params)
 
