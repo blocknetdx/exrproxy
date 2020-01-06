@@ -61,6 +61,7 @@ def application(env, start_response):
 
     namesp = paths[0]
     token = ''
+    xrfunc = ''
     if namesp == 'xr':
         token = paths[1]
         xrfunc = paths[2]
@@ -217,8 +218,11 @@ def call_xrfunc(namesp, token, xrfunc, env):
 
     try:
         res = requests.post(rpcurl, headers=headers, data=payload)
-        response = parse_result(json.loads(res.content))
-        return response
+        try:
+            response = parse_result(json.loads(res.content))
+            return response
+        except ValueError:
+            return res.content.decode('utf8')  # return raw string if json decode fails
     except:
         return {
             'code': 1002,
