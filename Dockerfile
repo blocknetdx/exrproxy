@@ -1,5 +1,5 @@
 # Build via docker:
-# docker build --build-arg cores=8 -t blocknetdx/xrouterproxy:0.4.0
+# docker build --build-arg cores=8 -t blocknetdx/xrouterproxy:0.4.0 .
 # docker run -d --name xrproxy -p 80:80 blocknetdx/xrouterproxy:0.4.0
 
 FROM nginx
