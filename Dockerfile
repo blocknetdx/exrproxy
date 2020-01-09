@@ -1,11 +1,8 @@
 # Build via docker:
-# docker build --build-arg cores=8 -t blocknetdx/xrouterproxy:0.4.0 .
-# docker run -d --name xrproxy -p 80:80 blocknetdx/xrouterproxy:0.4.0
+# docker build --build-arg cores=8 --build-arg workerconns=2048 -t blocknetdx/xrouterproxy:0.5.0 .
+# docker run -d --name xrproxy -p 80:80 blocknetdx/xrouterproxy:0.5.0
 
 FROM nginx
-
-ARG cores=1
-ENV ecores=$cores
 
 RUN apt update \
   && apt install -y --no-install-recommends \
@@ -28,6 +25,11 @@ RUN mkdir -p /opt/uwsgi/conf \
   && git clone --depth 1 --branch blocknet https://github.com/blocknetdx/python-bitcoinlib.git \
   && cp -r python-bitcoinlib/bitcoin /opt/uwsgi
 
+ARG cores=1
+ENV ecores=$cores
+ARG workerconns=1024
+ENV eworkerconns=$workerconns
+
 # Write nginx.conf /etc/nginx/nginx.conf
 RUN echo "                                                                         \n\
 user nginx;                                                                        \n\
@@ -37,7 +39,7 @@ error_log  /var/log/nginx/error.log warn;                                       
 pid        /var/run/nginx.pid;                                                     \n\
                                                                                    \n\
 events {                                                                           \n\
-    worker_connections 1024;                                                       \n\
+    worker_connections $eworkerconns;                                              \n\
 }                                                                                  \n\
                                                                                    \n\
 http {                                                                             \n\
