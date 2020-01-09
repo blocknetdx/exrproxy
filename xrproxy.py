@@ -5,6 +5,7 @@ import bitcoin.signmessage
 import bitcoin.wallet
 import json
 import requests
+import threading
 import uwsgi
 
 # import pydevd_pycharm
@@ -38,7 +39,6 @@ def application(env, start_response):
             'code': 1002,
             'error': 'Internal Server Error: bad service node key'
         }, snodekey, start_response)
-
 
     # parse the request path
     request_path = str(env.get('PATH_INFO'))
@@ -78,6 +78,13 @@ def application(env, start_response):
     # if xrouter plugin, set token to xr func name
     if namesp == 'xrs':
         token = xrfunc
+
+    # if payment tx exists, process it in background
+    payment_tx = str(env.get('HTTP_XR_PAYMENT', b'')).strip()
+    should_handle = uwsgi.opt.get('HANDLE_PAYMENTS', b'true').decode('utf8').lower()
+    if payment_tx and (should_handle == 'true' or should_handle == '1'):
+        hp_thread = threading.Thread(target=handle_payment, args=(payment_tx, env))
+        hp_thread.start()
 
     try:
         response = call_xrfunc(namesp, token, xrfunc, env)
@@ -255,6 +262,34 @@ def call_url(xrfunc, params, env):
             'code': 1002,
             'error': 'Internal Server Error: failed to connect to ' + xrfunc
         }
+
+
+def handle_payment(payment_tx, env):
+    rpchost = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_HOSTIP', b'').decode('utf8')
+    rpcport = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_PORT', b'').decode('utf8')
+    rpcuser = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_USER', b'').decode('utf8')
+    rpcpass = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_PASS', b'').decode('utf8')
+    rpcver = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_VER', b'1.0').decode('utf8')
+    rpcurl = 'http://' + rpcuser + ':' + rpcpass + '@' + rpchost + ':' + rpcport
+
+    # client pubkey
+    client_pubkey = str(env.get('HTTP_XR_PUBKEY', b''))
+
+    params = [payment_tx]
+    headers = {'Content-Type': 'application/json'}
+    payload = json.dumps({
+        'method': 'sendrawtransaction',
+        'params': params,
+        'jsonrpc': rpcver
+    })
+
+    try:
+        res = requests.post(rpcurl, headers=headers, data=payload)
+        print('Successfully processed payment from client: ' + client_pubkey + ' BLOCK tx: ' + payment_tx)
+        return True
+    except:
+        print('Failed to process payment from client: ' + client_pubkey + ' BLOCK tx: ' + payment_tx)
+        return False
 
 
 def parse_result(res):

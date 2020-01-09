@@ -137,8 +137,17 @@ threads = 2                                                                     
                                                                                                                    \n\
 # Set the service node private key for signing responses (mandatory)                                               \n\
 set-ph = SERVICENODE_PRIVKEY=                                                                                      \n\
+                                                                                                                   \n\
 # Set the chain to use (mainnet, testnet, regtest) defaults to mainnet                                             \n\
 #set-ph = BLOCKNET_CHAIN=mainnet                                                                                   \n\
+                                                                                                                   \n\
+# Optionally handle XRouter payments                                                                               \n\
+#set-ph = HANDLE_PAYMENTS=true                                                                                     \n\
+#set-ph = HANDLE_PAYMENTS_RPC_HOSTIP=192.168.1.20                                                                  \n\
+#set-ph = HANDLE_PAYMENTS_RPC_PORT=41419                                                                           \n\
+#set-ph = HANDLE_PAYMENTS_RPC_USER=test                                                                            \n\
+#set-ph = HANDLE_PAYMENTS_RPC_PASS=passw                                                                           \n\
+#set-ph = HANDLE_PAYMENTS_RPC_VER=2.0                                                                              \n\
                                                                                                                    \n\
 # Use the following format for all tokens, replace BLOCK with the                                                  \n\
 # SPV ticker name registered on the Blocknet network.                                                              \n\
@@ -146,7 +155,8 @@ set-ph = SERVICENODE_PRIVKEY=                                                   
 #set-ph = RPC_BLOCK_PORT=41419                                                                                     \n\
 #set-ph = RPC_BLOCK_USER=test                                                                                      \n\
 #set-ph = RPC_BLOCK_PASS=passw                                                                                     \n\
-#set-ph = RPC_BLOCK_VER=1.0                                                                                        \n\
+#set-ph = RPC_BLOCK_VER=2.0                                                                                        \n\
+                                                                                                                   \n\
 #set-ph = RPC_LTC_HOSTIP=192.168.1.20                                                                              \n\
 #set-ph = RPC_LTC_PORT=9332                                                                                        \n\
 #set-ph = RPC_LTC_USER=test                                                                                        \n\

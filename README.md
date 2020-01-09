@@ -26,6 +26,14 @@ set-ph = SERVICENODE_PRIVKEY=cV1bo3ME3qvw9Sxzo72skbFsAQ6ihyT6F8VXMe8mzv6EJoqFVXM
 #  mainnet or testnet
 set-ph = BLOCKNET_CHAIN=testnet
 
+# Handle XRouter payments
+set-ph = HANDLE_PAYMENTS=true
+set-ph = HANDLE_PAYMENTS_RPC_HOSTIP=192.168.1.25
+set-ph = HANDLE_PAYMENTS_RPC_PORT=41419
+set-ph = HANDLE_PAYMENTS_RPC_USER=user
+set-ph = HANDLE_PAYMENTS_RPC_PASS=pass
+set-ph = HANDLE_PAYMENTS_RPC_VER=2.0
+
 # Sample SPV RPC configuration
 set-ph = RPC_BLOCK_HOSTIP=192.168.1.25
 set-ph = RPC_BLOCK_PORT=41419
@@ -122,6 +130,21 @@ location = /xrs/LTCGetBlockCount {
     proxy_pass http://192.168.1.5:9091;
 }
 ```
+
+## Handle XRouter Payments
+
+The XRouter protocol allows Service Nodes to charge for specific services. The payment transaction is included along with the request packet. XRouter Proxy can handle submitting this to the Blocknet network on your behalf. Currently all XRouter fees are paid in BLOCK. XRouter Proxy will require the RPC credentials for the client responsible for handling the payment transaction.
+
+Supported options:
+
+| Option                       | Description   |
+| ---------------------------  | ------------- |
+| `HANDLE_PAYMENTS`            | Specify `true` (1) or `false` (0) |
+| `HANDLE_PAYMENTS_RPC_HOSTIP` | Ip address of the endpoint |
+| `HANDLE_PAYMENTS_RPC_PORT`   | Endpoint's port number |
+| `HANDLE_PAYMENTS_RPC_USER`   | RPC username |
+| `HANDLE_PAYMENTS_RPC_PASS`   | RPC password |
+| `HANDLE_PAYMENTS_RPC_VER`    | RPC json version |
 
 ## Docker
 
