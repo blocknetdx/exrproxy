@@ -103,8 +103,8 @@ Supported options:
 | `URL_[PLUGIN_NAME]_PORT`   | Plugin's port number |
 
 ```
-#set-ph = URL_LTCGetBlockCount_HOSTIP=172.17.0.2
-#set-ph = URL_LTCGetBlockCount_PORT=9332
+set-ph = URL_LTCGetBlockCount_HOSTIP=172.17.0.2
+set-ph = URL_LTCGetBlockCount_PORT=9332
 ``` 
 
 ## NGINX configs for XCloud Plugins
@@ -145,6 +145,16 @@ Supported options:
 | `HANDLE_PAYMENTS_RPC_USER`   | RPC username |
 | `HANDLE_PAYMENTS_RPC_PASS`   | RPC password |
 | `HANDLE_PAYMENTS_RPC_VER`    | RPC json version |
+
+*In `/opt/uwsgiconf/uwsgi.ini`*
+```
+set-ph = HANDLE_PAYMENTS=true
+set-ph = HANDLE_PAYMENTS_RPC_HOSTIP=192.168.1.25
+set-ph = HANDLE_PAYMENTS_RPC_PORT=41414
+set-ph = HANDLE_PAYMENTS_RPC_USER=user
+set-ph = HANDLE_PAYMENTS_RPC_PASS=pass
+set-ph = HANDLE_PAYMENTS_RPC_VER=2.0
+``` 
 
 ## Docker
 
