@@ -148,6 +148,8 @@ def call_xrfunc(namesp, token, xrfunc, env):
         }
 
     rpcurl = 'http://' + rpcuser + ':' + rpcpass + '@' + rpchost + ':' + rpcport
+    if rpcuser == '' and rpcpass == '':  # if no rpc credentials
+        rpcurl = 'http://' + rpchost + ':' + rpcport
     headers = {'Content-Type': 'application/json'}
 
     l_xr_method = xrfunc.lower()
@@ -166,6 +168,7 @@ def call_xrfunc(namesp, token, xrfunc, env):
             response = []
             for b_id in params:
                 payload = json.dumps({
+                    'id': 1,
                     'method': rpc_method,
                     'params': [b_id],
                     'jsonrpc': rpcver
@@ -199,6 +202,7 @@ def call_xrfunc(namesp, token, xrfunc, env):
                 if l_xr_method == 'xrgettransactions':
                     params2 += [1]
                 payload = json.dumps({
+                    'id': 1,
                     'method': rpc_method,
                     'params': params2,
                     'jsonrpc': rpcver
@@ -218,6 +222,7 @@ def call_xrfunc(namesp, token, xrfunc, env):
             pass
 
     payload = json.dumps({
+        'id': 1,
         'method': rpc_method,
         'params': params,
         'jsonrpc': rpcver
@@ -271,6 +276,8 @@ def handle_payment(payment_tx, env):
     rpcpass = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_PASS', b'').decode('utf8')
     rpcver = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_VER', b'1.0').decode('utf8')
     rpcurl = 'http://' + rpcuser + ':' + rpcpass + '@' + rpchost + ':' + rpcport
+    if rpcuser == '' and rpcpass == '':  # if no rpc credentials
+        rpcurl = 'http://' + rpchost + ':' + rpcport
 
     # client pubkey
     client_pubkey = str(env.get('HTTP_XR_PUBKEY', b''))
@@ -278,6 +285,7 @@ def handle_payment(payment_tx, env):
     params = [payment_tx]
     headers = {'Content-Type': 'application/json'}
     payload = json.dumps({
+        'id': 1,
         'method': 'sendrawtransaction',
         'params': params,
         'jsonrpc': rpcver
