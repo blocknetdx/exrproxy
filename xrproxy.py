@@ -162,6 +162,7 @@ def call_xrfunc(namesp, token, xrfunc, env):
             pass
         if l_xr_method == 'xrgetblockhash':
             params[0] = hex(params[0])
+            params[1] = False
         if l_xr_method == 'xrgetblock':
             pass
         if l_xr_method == 'xrgetblocks' or l_xr_method == 'xrgettransactions':  # iterate over all ids
@@ -170,7 +171,7 @@ def call_xrfunc(namesp, token, xrfunc, env):
                 payload = json.dumps({
                     'id': 1,
                     'method': rpc_method,
-                    'params': [b_id],
+                    'params': [b_id, False],
                     'jsonrpc': rpcver
                 })
                 try:
