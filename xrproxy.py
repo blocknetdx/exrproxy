@@ -80,9 +80,9 @@ def application(env, start_response):
         token = xrfunc
 
     # if payment tx exists, process it in background
-    payment_tx = str(env.get('HTTP_XR_PAYMENT', b'')).strip()
+    payment_tx = str(env.get('HTTP_XR_PAYMENT', ''))
     should_handle = uwsgi.opt.get('HANDLE_PAYMENTS', b'true').decode('utf8').lower()
-    if payment_tx and (should_handle == 'true' or should_handle == '1'):
+    if payment_tx != '' and (should_handle == 'true' or should_handle == '1'):
         hp_thread = threading.Thread(target=handle_payment, args=(payment_tx, env))
         hp_thread.start()
 
