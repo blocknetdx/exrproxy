@@ -12,7 +12,7 @@ import uwsgi
 # pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
 
 
-def application(env, start_response):
+def application(env: dict, start_response):
     # Select chain
     chain = uwsgi.opt.get('BLOCKNET_CHAIN', b'mainnet').decode('utf8').strip()
     try:
@@ -102,7 +102,7 @@ def application(env, start_response):
         }, snodekey, start_response)
 
 
-def call_xrfunc(namesp, token, xrfunc, env):
+def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
     is_xrouter_plugin = namesp == 'xrs'
 
     # obtain host info
@@ -123,7 +123,8 @@ def call_xrfunc(namesp, token, xrfunc, env):
         request_body = env.get('wsgi.input').read(request_body_size)
         if request_body != b'\n':
             try:
-                params += json.loads(request_body.decode('utf8'))
+                data = request_body.decode('utf8')
+                params += json.loads(data)
             except:
                 pass
 
@@ -161,17 +162,28 @@ def call_xrfunc(namesp, token, xrfunc, env):
         if l_xr_method == 'xrgetblockcount':
             pass
         if l_xr_method == 'xrgetblockhash':
-            params[0] = hex(params[0])
-            params[1] = False
+            if isinstance(params[0], int):
+                params = [hex(params[0]), False]
+            else:
+                params = [params[0], False]
         if l_xr_method == 'xrgetblock':
-            pass
+            params = [params[0], False]
         if l_xr_method == 'xrgetblocks' or l_xr_method == 'xrgettransactions':  # iterate over all ids
             response = []
             for b_id in params:
+                parsed_id: any
+                rpc_method2 = rpc_method
+                if isinstance(b_id, int):
+                    parsed_id = hex(b_id)
+                    if l_xr_method == 'xrgetblocks':
+                        rpc_method2 = 'eth_getBlockByNumber'
+                else:
+                    parsed_id = b_id
+                params2 = [parsed_id, False]
                 payload = json.dumps({
                     'id': 1,
-                    'method': rpc_method,
-                    'params': [b_id, False],
+                    'method': rpc_method2,
+                    'params': params2,
                     'jsonrpc': rpcver
                 })
                 try:
@@ -243,7 +255,7 @@ def call_xrfunc(namesp, token, xrfunc, env):
         }
 
 
-def call_url(xrfunc, params, env):
+def call_url(xrfunc: str, params: any, env: dict):
     rpchost = uwsgi.opt.get('URL_' + xrfunc + '_HOSTIP', b'').decode('utf8')
     rpcport = uwsgi.opt.get('URL_' + xrfunc + '_PORT', b'').decode('utf8')
     rpcurl = 'http://' + rpchost + ':' + rpcport + str(env.get('PATH_INFO', b''))
@@ -270,7 +282,7 @@ def call_url(xrfunc, params, env):
         }
 
 
-def handle_payment(payment_tx, env):
+def handle_payment(payment_tx: str, env: dict):
     rpchost = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_HOSTIP', b'').decode('utf8')
     rpcport = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_PORT', b'').decode('utf8')
     rpcuser = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_USER', b'').decode('utf8')
@@ -301,14 +313,14 @@ def handle_payment(payment_tx, env):
         return False
 
 
-def parse_result(res):
+def parse_result(res: any):
     if 'result' in res and res['result']:
         return res['result']
     else:
         return res
 
 
-def xr_to_rpc(token, xr_func):
+def xr_to_rpc(token: str, xr_func: str):
     l_xr_method = xr_func.lower()
     l_token = token.lower()
 
@@ -334,7 +346,7 @@ def xr_to_rpc(token, xr_func):
     return ''
 
 
-def send_response(result, snodekey, start_response):
+def send_response(result: any, snodekey: bitcoin.wallet.CKey, start_response):
     headers = [('Content-Type', 'application/json')]
     res_data = result.encode('utf8') if isinstance(result, str) else json.dumps(result).encode('utf8')
 

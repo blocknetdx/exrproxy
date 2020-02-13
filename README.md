@@ -50,7 +50,7 @@ set-ph = URL_SomeCustomPlugin_PORT=8080
 *Start the xrouter proxy container*
 
 ```
-docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf blocknetdx/xrouterproxy:0.4.0
+docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf blocknetdx/xrouterproxy:latest
 ```
 
 *Test if proxy is running*
@@ -116,7 +116,7 @@ These nginx XCloud plugins bypass the internal reverse proxy handler that we've 
 The XRouter Proxy container has a volume that mounts to `/etc/nginx/conf.d` where all nginx XCloud plugin endpoints are installed. This can be mounted via a docker volume:
 
 ```
-docker run -v=/opt/nginxconfs/xcloud:/etc/nginx/conf.d blocknetdx/xrouterproxy:0.4.0
+docker run -v=/opt/nginxconfs/xcloud:/etc/nginx/conf.d blocknetdx/xrouterproxy:latest
 ``` 
 
 *Sample nginx XCloud plugin conf: /opt/nginxconfs/xcloud/LTCGetBlockCount.conf*
@@ -170,11 +170,11 @@ Volumes that can be used with the XRouter Proxy container:
 ### Full docker run example w/ volumes:
 
 ```
-docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/opt/nginxconfs/xcloud:/etc/nginx/conf.d blocknetdx/xrouterproxy:0.4.0
+docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/opt/nginxconfs/xcloud:/etc/nginx/conf.d blocknetdx/xrouterproxy:latest
 ```
 
 ### Build Dockerfile
 
 ```
-docker build --build-arg cores=4 -t blocknetdx/xrouterproxy:0.4.0 . 
+docker build --build-arg cores=4 -t blocknetdx/xrouterproxy:latest . 
 ```
