@@ -89,6 +89,32 @@ set-ph = RPC_BLOCK_PORT=41414
 set-ph = RPC_BLOCK_USER=user
 set-ph = RPC_BLOCK_PASS=pass
 set-ph = RPC_BLOCK_VER=2.0
+```
+
+### XCloud Plugin RPC endpoint
+
+Format: `RPC_[PLUGIN_NAME]_[VAR]`
+
+The main difference between SPV and XCloud plugin RPC configurations is the additional `_METHOD` variable in the XCloud plugin config. 
+
+Supported options:
+
+| Option                  | Description   |
+| -------------------     | ------------- |
+| `RPC_[PLUGIN_NAME]_HOSTIP` | Ip address of the endpoint |
+| `RPC_[PLUGIN_NAME]_PORT`   | Endpoint's port number |
+| `RPC_[PLUGIN_NAME]_USER`   | RPC username |
+| `RPC_[PLUGIN_NAME]_PASS`   | RPC password |
+| `RPC_[PLUGIN_NAME]_VER`    | RPC json version (ETH, parity and geth typically require "2.0") |
+| `RPC_[PLUGIN_NAME]_METHOD` | RPC method to be called |
+
+```
+set-ph = RPC_BLOCK_HOSTIP=192.168.1.25
+set-ph = RPC_BLOCK_PORT=41414
+set-ph = RPC_BLOCK_USER=user
+set-ph = RPC_BLOCK_PASS=pass
+set-ph = RPC_BLOCK_VER=2.0
+set-ph = RPC_BLOCK_METHOD=getblockcount
 ``` 
 
 ### URL endpoint
