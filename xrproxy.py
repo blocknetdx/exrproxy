@@ -165,7 +165,11 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
             if isinstance(params[0], int):
                 params = [hex(params[0]), False]
             elif isinstance(params[0], str) and not params[0].startswith('0x'):
-                params = ['0x' + params[0], False]
+                try:  # first check if int
+                    i = int(params[0])
+                    params = [hex(i), False]
+                except ValueError:
+                    params = ['0x' + params[0], False]
             else:
                 params = [params[0], False]
         if l_xr_method == 'xrgetblock':
