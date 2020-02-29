@@ -164,6 +164,8 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
         if l_xr_method == 'xrgetblockhash':
             if isinstance(params[0], int):
                 params = [hex(params[0]), False]
+            elif isinstance(params[0], str) and not params[0].startswith('0x'):
+                params = ['0x' + params[0], False]
             else:
                 params = [params[0], False]
         if l_xr_method == 'xrgetblock':
@@ -180,6 +182,8 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
                 else:
                     parsed_id = b_id
                 params2 = [parsed_id, False]
+                if l_xr_method == 'xrgettransactions':
+                    params2 = [parsed_id] # transactions doesn't support 2nd parameter
                 payload = json.dumps({
                     'id': 1,
                     'method': rpc_method2,
@@ -230,7 +234,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
                     }
             return response
         if l_xr_method == 'xrgettransaction':
-            pass
+            params = [params[0], 1]
         if l_xr_method == 'xrsendtransaction':
             pass
 
