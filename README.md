@@ -191,7 +191,7 @@ Volumes that can be used with the XRouter Proxy container:
 | Volume              | Description   |
 | ------------------- | ------------- |
 | `/opt/uwsgi/conf`   | Should contain the `uwsgi.ini` config |
-| `/etc/nginx/conf.d` | Contains all the nginx configuration files. Specifically any custom XCloud plugin endpoints |
+| `/etc/nginx`        | Contains all the nginx configuration files. Specifically any custom XCloud plugin endpoints |
 
 ### Full docker run example w/ volumes:
 
