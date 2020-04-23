@@ -207,6 +207,40 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
             pass
         if l_xr_method == 'xrsendtransaction':
             pass
+    elif l_token == 'neo':
+        if l_xr_method == 'xrdecoderawtransaction':
+            pass
+        if l_xr_method == 'xrgetblockcount':
+            pass
+        if l_xr_method == 'xrgetblockhash':
+            params[0] = int(params[0])
+        if l_xr_method == 'xrgetblock':
+            params = [params[0], 1]
+        if l_xr_method == 'xrgetblocks' or l_xr_method == 'xrgettransactions': # iterate over all ids
+            response = []
+            for b_id in params:
+                params2 = [b_id]
+                if l_xr_method == 'xrgettransactions' or l_xr_method == 'xrgetblocks':
+                    params2 += [1]
+                payload = json.dumps({
+                    'id': 1,
+                    'method': rpc_method,
+                    'params': params2,
+                    'jsonrpc': rpcver
+                })
+                try:
+                    res = requests.post(rpcurl, headers=headers, data=payload)
+                    response += [parse_result(json.loads(res.content))]
+                except:
+                    return {
+                        'code': 1002,
+                        'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+                    }
+            return response
+        if l_xr_method == 'xrgettransaction':
+            params = [params[0], 1]
+        if l_xr_method == 'xrsendtransaction':
+            pass    
     else:
         if l_xr_method == 'xrdecoderawtransaction':
             pass
@@ -341,6 +375,15 @@ def xr_to_rpc(token: str, xr_func: str):
         if l_xr_method == 'xrgettransaction': return 'eth_getTransactionByHash'
         if l_xr_method == 'xrgettransactions': return 'eth_getTransactionByHash'
         if l_xr_method == 'xrsendtransaction': return 'eth_sendRawTransaction'
+    elif l_token == 'neo':
+        if l_xr_method == 'xrdecoderawtransaction': return ''
+        if l_xr_method == 'xrgetblockcount': return 'getblockcount'
+        if l_xr_method == 'xrgetblockhash': return 'getblockhash'
+        if l_xr_method == 'xrgetblock': return 'getblock'
+        if l_xr_method == 'xrgetblocks': return 'getblock'
+        if l_xr_method == 'xrgettransaction': return 'getrawtransaction'
+        if l_xr_method == 'xrgettransactions': return 'getrawtransaction'
+        if l_xr_method == 'xrsendtransaction': return 'sendrawtransaction'        
     else:
         if l_xr_method == 'xrdecoderawtransaction': return 'decoderawtransaction'
         if l_xr_method == 'xrgetblockcount': return 'getblockcount'
