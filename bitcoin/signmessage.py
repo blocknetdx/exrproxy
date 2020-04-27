@@ -48,7 +48,7 @@ def SignMessage(key, message):
 class BitcoinMessage(ImmutableSerializable):
     __slots__ = ['magic', 'message']
 
-    def __init__(self, message="", magic="Bitcoin Signed Message:\n"):
+    def __init__(self, message="", magic="Blocknet Signed Message:\n"):
         object.__setattr__(self, 'message', message.encode("utf-8"))
         object.__setattr__(self, 'magic', magic.encode("utf-8"))
 
