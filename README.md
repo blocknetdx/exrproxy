@@ -56,13 +56,13 @@ docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf blockn
 *Test if proxy is running*
 
 ```
-curl -X POST -H "content-type: application/json" --data-binary '[]' localhost:9090/
+curl -X POST -H "content-type: application/json" --data-binary '[]' 127.0.0.1:9090/
 ```
 
 *Test if endpoint is running*
 
 ```
-curl -X POST -H "content-type: application/json" --data-binary '[]' localhost:9090/xr/BLOCK/xrGetBlockCount
+curl -X POST -H "content-type: application/json" --data-binary '[]' 127.0.0.1:9090/xr/BLOCK/xrGetBlockCount
 ```
 
 ## uwsgi.ini configuration
