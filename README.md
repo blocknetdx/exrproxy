@@ -139,13 +139,14 @@ An nginx config file can be used to expose an XCloud plugin through the XRouter 
 
 These nginx XCloud plugins bypass the internal reverse proxy handler that we've provided, as a result you will be responsible for signing requests with the proper Service Node key manually as well as handling any payments from XRouter clients. If you do not want to do this, consider using the [URL endpoint](#URL-endpoint) plugin type that we've provided in the default reverse proxy handler. 
 
-The XRouter Proxy container has a volume that mounts to `/etc/nginx/conf.d` where all nginx XCloud plugin endpoints are installed. This can be mounted via a docker volume:
+The XRouter Proxy container has a volume that mounts to `/etc/nginx`, the `conf.d` directory in here is where all nginx XCloud plugin endpoints are installed. This can be mounted via a docker volume:
 
 ```
-docker run -v=/opt/nginxconfs/xcloud:/etc/nginx/conf.d blocknetdx/xrouterproxy:latest
+# Assumes this directory exists: /opt/nginxconfs/conf.d/xcloud
+docker run -v=/opt/nginxconfs:/etc/nginx blocknetdx/xrouterproxy:latest
 ``` 
 
-*Sample nginx XCloud plugin conf: /opt/nginxconfs/xcloud/LTCGetBlockCount.conf*
+*Sample nginx XCloud plugin conf: /opt/nginxconfs/conf.d/xcloud/LTCGetBlockCount.conf*
 
 ```
 location = /xrs/LTCGetBlockCount {
@@ -196,7 +197,7 @@ Volumes that can be used with the XRouter Proxy container:
 ### Full docker run example w/ volumes:
 
 ```
-docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/opt/nginxconfs/xcloud:/etc/nginx/conf.d blocknetdx/xrouterproxy:latest
+docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/opt/nginxconfs:/etc/nginx blocknetdx/xrouterproxy:latest
 ```
 
 ### Build Dockerfile
