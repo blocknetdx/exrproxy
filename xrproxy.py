@@ -83,8 +83,17 @@ def application(env: dict, start_response):
     payment_tx = str(env.get('HTTP_XR_PAYMENT', ''))
     should_handle = uwsgi.opt.get('HANDLE_PAYMENTS', b'true').decode('utf8').lower()
     if payment_tx != '' and (should_handle == 'true' or should_handle == '1'):
-        hp_thread = threading.Thread(target=handle_payment, args=(payment_tx, env))
-        hp_thread.start()
+        payment_enforcement = uwsgi.opt.get('HANDLE_PAYMENTS_ENFORCE', b'false').decode('utf8').lower()
+        if payment_enforcement == 'true' or payment_enforcement == '1':
+            if not handle_payment(payment_tx, env):
+                return send_response({
+                    'code': 1028,
+                    'error': 'Bad request: bad or insufficient fee for ' + xrfunc + ' for token ' + token
+                             + ' : ' + getattr(e, 'message', repr(e))
+                }, snodekey, start_response)
+        else:
+            hp_thread = threading.Thread(target=handle_payment, args=(payment_tx, env))
+            hp_thread.start()
 
     try:
         response = call_xrfunc(namesp, token, xrfunc, env)
@@ -348,6 +357,14 @@ def handle_payment(payment_tx: str, env: dict):
 
     try:
         res = requests.post(rpcurl, headers=headers, data=payload)
+        enforce = uwsgi.opt.get('HANDLE_PAYMENTS_ENFORCE', b'false').decode('utf8')
+        # look for valid tx hash in response otherwise fail the check
+        if enforce is 'true' or enforce is '1':
+            payment_response = res.content.decode('utf8')
+            if len(payment_response) != 32 or 'error' in payment_response:
+                print('Failed to process payment from client: ' + client_pubkey
+                      + 'Error: ' + payment_response + ' tx hex: ' + payment_tx)
+                return False
         print('Successfully processed payment from client: ' + client_pubkey + ' BLOCK tx: ' + payment_tx)
         return True
     except:

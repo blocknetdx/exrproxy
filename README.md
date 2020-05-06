@@ -167,6 +167,7 @@ Supported options:
 | Option                       | Description   |
 | ---------------------------  | ------------- |
 | `HANDLE_PAYMENTS`            | Specify `true` (1) or `false` (0) |
+| `HANDLE_PAYMENTS_ENFORCE`    | Specify `true` (1) or `false` (0). Enforces payment (may slow down requests) |
 | `HANDLE_PAYMENTS_RPC_HOSTIP` | Ip address of the endpoint |
 | `HANDLE_PAYMENTS_RPC_PORT`   | Endpoint's port number |
 | `HANDLE_PAYMENTS_RPC_USER`   | RPC username |
@@ -176,6 +177,7 @@ Supported options:
 *In `/opt/uwsgiconf/uwsgi.ini`*
 ```
 set-ph = HANDLE_PAYMENTS=true
+set-ph = HANDLE_PAYMENTS_ENFORCE=false
 set-ph = HANDLE_PAYMENTS_RPC_HOSTIP=192.168.1.25
 set-ph = HANDLE_PAYMENTS_RPC_PORT=41414
 set-ph = HANDLE_PAYMENTS_RPC_USER=user
