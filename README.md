@@ -1,5 +1,5 @@
 # Blocknet Enterprise XRouter Proxy
-https://github.com/blocknetdx/xrouterproxy
+https://github.com/blocknetdx/exrproxy
 
 The XRouter Proxy acts as a reverse proxy (similar to a load balancer) for all your XRouter services and oracles. The reverse proxy is comprised of an nginx web server and a uwsgi python handler. This repository is officially supported by the Blocknet core team. Please feel free to submit any issues or requests.
 
@@ -50,7 +50,7 @@ set-ph = URL_SomeCustomPlugin_PORT=8080
 *Start the xrouter proxy container*
 
 ```
-docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf blocknetdx/xrouterproxy:latest
+docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf blocknetdx/exrproxy:latest
 ```
 
 *Test if proxy is running*
@@ -143,7 +143,7 @@ The XRouter Proxy container has a volume that mounts to `/etc/nginx`, the `conf.
 
 ```
 # Assumes this directory exists: /opt/nginxconfs/conf.d/xcloud
-docker run -v=/opt/nginxconfs:/etc/nginx blocknetdx/xrouterproxy:latest
+docker run -v=/opt/nginxconfs:/etc/nginx blocknetdx/exrproxy:latest
 ``` 
 
 *Sample nginx XCloud plugin conf: /opt/nginxconfs/conf.d/xcloud/LTCGetBlockCount.conf*
@@ -187,7 +187,7 @@ set-ph = HANDLE_PAYMENTS_RPC_VER=2.0
 
 ## Docker
 
-https://hub.docker.com/r/blocknetdx/xrouterproxy/tags
+https://hub.docker.com/r/blocknetdx/exrproxy/tags
 
 Volumes that can be used with the XRouter Proxy container:
 
@@ -199,11 +199,11 @@ Volumes that can be used with the XRouter Proxy container:
 ### Full docker run example w/ volumes:
 
 ```
-docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/opt/nginxconfs:/etc/nginx blocknetdx/xrouterproxy:latest
+docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/opt/nginxconfs:/etc/nginx blocknetdx/exrproxy:latest
 ```
 
 ### Build Dockerfile
 
 ```
-docker build --build-arg cores=4 -t blocknetdx/xrouterproxy:latest . 
+docker build --build-arg cores=4 -t blocknetdx/exrproxy:latest . 
 ```
