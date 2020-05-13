@@ -1,5 +1,6 @@
 # Blocknet Enterprise XRouter Proxy
 https://github.com/blocknetdx/exrproxy
+https://hub.docker.com/r/blocknetdx/exrproxy
 
 The XRouter Proxy acts as a reverse proxy (similar to a load balancer) for all your XRouter services and oracles. The reverse proxy is comprised of an nginx web server and a uwsgi python handler. This repository is officially supported by the Blocknet core team. Please feel free to submit any issues or requests.
 
