@@ -1,3 +1,7 @@
+# Copyright (c) 2019-2020 The Blocknet developers
+# Distributed under the MIT software license, see the accompanying
+# file LICENSE or http://www.opensource.org/licenses/mit-license.php.
+
 #!/usr/bin/env python3
 
 import bitcoin.core
