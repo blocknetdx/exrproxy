@@ -86,14 +86,13 @@ def application(env: dict, start_response):
     # if payment tx exists, process it in background
     payment_tx = str(env.get('HTTP_XR_PAYMENT', ''))
     should_handle = uwsgi.opt.get('HANDLE_PAYMENTS', b'true').decode('utf8').lower()
-    if payment_tx != '' and (should_handle == 'true' or should_handle == '1'):
+    if should_handle == 'true' or should_handle == '1':
         payment_enforcement = uwsgi.opt.get('HANDLE_PAYMENTS_ENFORCE', b'false').decode('utf8').lower()
         if payment_enforcement == 'true' or payment_enforcement == '1':
-            if not handle_payment(payment_tx, env):
+            if payment_tx == '' or not handle_payment(payment_tx, env):
                 return send_response({
                     'code': 1028,
                     'error': 'Bad request: bad or insufficient fee for ' + xrfunc + ' for token ' + token
-                             + ' : ' + getattr(e, 'message', repr(e))
                 }, snodekey, start_response)
         else:
             hp_thread = threading.Thread(target=handle_payment, args=(payment_tx, env))
