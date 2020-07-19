@@ -395,8 +395,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
         'jsonrpc': rpcver
     })
 
-    try:
-        
+    try:        
         res = requests.post(rpcurl, headers=headers, data=payload)
         try:
             response = parse_result(json.loads(res.content))
