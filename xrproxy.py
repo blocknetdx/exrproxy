@@ -11,6 +11,7 @@ import json
 import requests
 import threading
 import uwsgi
+from requests.auth import HTTPDigestAuth
 
 # import pydevd_pycharm
 # pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
@@ -168,7 +169,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
     l_xr_method = xrfunc.lower()
     l_token = token.lower()
 
-    if l_token == 'eth':
+    if l_token == 'eth' or l_token == 'etc':
         if l_xr_method == 'xrdecoderawtransaction':
             pass
         if l_xr_method == 'xrgetblockcount':
@@ -253,6 +254,105 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
             params = [params[0], 1]
         if l_xr_method == 'xrsendtransaction':
             pass    
+    elif l_token == 'xmr':
+        rpcurl = 'http://' + rpchost + ':' + rpcport + '/json_rpc'
+        auth = HTTPDigestAuth(rpcuser,rpcpass)
+        payload = json.dumps({
+            'id': 1,
+            'method': rpc_method,
+            'params': params,
+            'jsonrpc': rpcver
+        })
+
+        if l_xr_method == 'xrdecoderawtransaction':
+            pass
+        if l_xr_method == 'xrgetblockcount':
+            try:                
+                res = requests.post(rpcurl, headers=headers, data=payload, auth=auth)
+                try:
+                    response = json.loads(res.content)
+                    count = str(response['result']['count'])
+                    return count
+                except ValueError:
+                    return res.content.decode('utf8')  # return raw string if json decode fails
+            except:
+                return {
+                    'code': 1002,
+                    'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+                }
+        if l_xr_method == 'xrgetblockhash':
+            params[0] = int(params[0])
+        if l_xr_method == 'xrgetblock':
+            payload = json.dumps({
+                'id': 1,
+                'method': rpc_method,
+                'params': {'hash':params[0]},
+                'jsonrpc': rpcver
+            })
+        if l_xr_method == 'xrgetblocks': # iterate over all ids
+            response = []
+            for b_id in params:
+                params2 = b_id
+                if l_xr_method == 'xrgetblocks':
+                    payload = json.dumps({
+                        'id': 1,
+                        'method': rpc_method,
+                        'params': {'hash':params2},
+                        'jsonrpc': rpcver
+                    })
+                try:
+                    res = requests.post(rpcurl, headers=headers, data=payload, auth=auth)
+                    response += [parse_result(json.loads(res.content))]
+                except:
+                    return {
+                        'code': 1002,
+                        'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+                    }
+            return response
+        if l_xr_method == 'xrgettransaction':
+            rpcurl = 'http://' + rpchost + ':' + rpcport + '/get_transactions'
+            payload = json.dumps({
+                'txs_hashes': [params[0]],
+                'decode_as_json': True
+            })
+        if l_xr_method == 'xrgettransactions': # iterate over all ids
+            rpcurl = 'http://' + rpchost + ':' + rpcport + '/get_transactions'
+            response = []
+            for b_id in params:
+                params2 = b_id
+                if l_xr_method == 'xrgettransactions':
+                    payload = json.dumps({
+                        'txs_hashes': [params2],
+                        'decode_as_json': True
+                    })
+                try:
+                    res = requests.post(rpcurl, headers=headers, data=payload, auth=auth)
+                    response += [parse_result(json.loads(res.content))]
+                except:
+                    return {
+                        'code': 1002,
+                        'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+                    }
+            return response
+        if l_xr_method == 'xrsendtransaction':
+            rpcurl = 'http://' + rpchost + ':' + rpcport + '/send_raw_transaction'
+            payload = json.dumps({
+                'tx_as_hex': params[0],
+                'do_not_relay': False
+            })
+
+        try:            
+            res = requests.post(rpcurl, headers=headers, data=payload, auth=auth)
+            try:
+                response = parse_result(json.loads(res.content))
+                return response
+            except ValueError:
+                return res.content.decode('utf8')  # return raw string if json decode fails
+        except:
+            return {
+                'code': 1002,
+                'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+            }
     else:
         if l_xr_method == 'xrdecoderawtransaction':
             pass
@@ -296,6 +396,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
     })
 
     try:
+        
         res = requests.post(rpcurl, headers=headers, data=payload)
         try:
             response = parse_result(json.loads(res.content))
@@ -386,7 +487,7 @@ def xr_to_rpc(token: str, xr_func: str):
     l_xr_method = xr_func.lower()
     l_token = token.lower()
 
-    if l_token == 'eth':
+    if l_token == 'eth' or l_token == 'etc':
         if l_xr_method == 'xrdecoderawtransaction': return ''
         if l_xr_method == 'xrgetblockcount': return 'eth_blockNumber'
         if l_xr_method == 'xrgetblockhash': return 'eth_getBlockByNumber'
@@ -404,6 +505,15 @@ def xr_to_rpc(token: str, xr_func: str):
         if l_xr_method == 'xrgettransaction': return 'getrawtransaction'
         if l_xr_method == 'xrgettransactions': return 'getrawtransaction'
         if l_xr_method == 'xrsendtransaction': return 'sendrawtransaction'        
+    elif l_token == 'xmr':
+        if l_xr_method == 'xrdecoderawtransaction': return ''
+        if l_xr_method == 'xrgetblockcount': return 'get_block_count'
+        if l_xr_method == 'xrgetblockhash': return 'on_get_block_hash'
+        if l_xr_method == 'xrgetblock': return 'get_block'
+        if l_xr_method == 'xrgetblocks': return 'get_block'
+        if l_xr_method == 'xrgettransaction': return 'get_transactions'
+        if l_xr_method == 'xrgettransactions': return 'get_transactions'
+        if l_xr_method == 'xrsendtransaction': return 'send_raw_transaction'
     else:
         if l_xr_method == 'xrdecoderawtransaction': return 'decoderawtransaction'
         if l_xr_method == 'xrgetblockcount': return 'getblockcount'
