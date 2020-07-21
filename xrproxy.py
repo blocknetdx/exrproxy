@@ -185,6 +185,27 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
                     params = ['0x' + params[0], False]
             else:
                 params = [params[0], False]
+
+            payload = json.dumps({
+                'id': 1,
+                'method': rpc_method,
+                'params': params,
+                'jsonrpc': rpcver
+            })
+
+            try:        
+                res = requests.post(rpcurl, headers=headers, data=payload)
+                try:
+                    response = json.loads(res.content)
+                    block_hash = str(response['result']['hash'])
+                    return block_hash
+                except ValueError:
+                    return res.content.decode('utf8')  # return raw string if json decode fails
+            except:
+                return {
+                    'code': 1002,
+                    'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+                }
         if l_xr_method == 'xrgetblock':
             params = [params[0], False]
         if l_xr_method == 'xrgetblocks' or l_xr_method == 'xrgettransactions':  # iterate over all ids
