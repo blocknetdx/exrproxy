@@ -173,7 +173,26 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
         if l_xr_method == 'xrdecoderawtransaction':
             pass
         if l_xr_method == 'xrgetblockcount':
-            pass
+            payload = json.dumps({
+                'id': 1,
+                'method': rpc_method,
+                'params': params,
+                'jsonrpc': rpcver
+            })
+
+            try:        
+                res = requests.post(rpcurl, headers=headers, data=payload)
+                try:
+                    response = parse_result(json.loads(res.content))
+                    count = int(response, 16)
+                    return count
+                except ValueError:
+                    return res.content.decode('utf8')  # return raw string if json decode fails
+            except:
+                return {
+                    'code': 1002,
+                    'error': 'Internal Server Error: failed to connect to ' + xrfunc + ' for token ' + token
+                }
         if l_xr_method == 'xrgetblockhash':
             if isinstance(params[0], int):
                 params = [hex(params[0]), False]
