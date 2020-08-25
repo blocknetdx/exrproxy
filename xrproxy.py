@@ -155,6 +155,9 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
 
     # resolve the rpc name from the supplied xrouter call
     rpc_method = rpcmethod.lower() if is_xrouter_plugin else xr_to_rpc(token, xrfunc)
+    if xrfunc[:3].lower() == 'eth':	
+        rpc_method = xrfunc	
+
     if not rpc_method:
         return {
             'code': 1031,
