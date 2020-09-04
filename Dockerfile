@@ -34,6 +34,9 @@ ENV ecores=$cores
 ARG workerconns=1024
 ENV eworkerconns=$workerconns
 
+# remove default config
+RUN rm /etc/nginx/conf.d/default.conf
+
 # Write nginx.conf /etc/nginx/nginx.conf
 RUN echo "                                                                         \n\
 user nginx;                                                                        \n\
