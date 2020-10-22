@@ -12,10 +12,19 @@ import requests
 import threading
 import uwsgi
 from requests.auth import HTTPDigestAuth
+import logging
+import os
 
 # import pydevd_pycharm
 # pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
+# logging
+LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
+logging.basicConfig(level=LOGLEVEL,    #TODO: pull level from env
+                    format='%(asctime)s %(levelname)s - %(message)s',
+                    datefmt='[%Y-%m-%d:%H:%M:%S]')
 
+
+logging.debug('### app start')
 
 def application(env: dict, start_response):
     # Select chain
@@ -48,6 +57,7 @@ def application(env: dict, start_response):
     # parse the request path
     request_path = str(env.get('PATH_INFO'))
     paths = request_path.split('/')
+    logging.debug('paths: {}'.format(paths))
     if len(paths) > 1:
         del paths[0]
 
@@ -73,6 +83,8 @@ def application(env: dict, start_response):
     elif namesp == 'xrs':
         xrfunc = paths[1]
 
+    logging.debug('token: {}'.format(token))
+
     if not namesp or not xrfunc or (namesp == 'xr' and not token):
         return send_response({
             'code': 1004,
@@ -83,12 +95,17 @@ def application(env: dict, start_response):
     # if xrouter plugin, set token to xr func name
     if namesp == 'xrs':
         token = xrfunc
+        logging.debug('xrs token set value from xrfunc: {}'.format(token))
+
 
     # if payment tx exists, process it in background
     payment_tx = str(env.get('HTTP_XR_PAYMENT', ''))
-    should_handle = uwsgi.opt.get('HANDLE_PAYMENTS', b'true').decode('utf8').lower()
+    
+    should_handle = payment_enforcement = uwsgi.opt.get('HANDLE_PAYMENTS_' + token, b'').decode('utf8').lower()
+    
+    logging.debug('paymentenforce: {}'.format(payment_enforcement))
+
     if should_handle == 'true' or should_handle == '1':
-        payment_enforcement = uwsgi.opt.get('HANDLE_PAYMENTS_ENFORCE', b'false').decode('utf8').lower()
         if payment_enforcement == 'true' or payment_enforcement == '1':
             if payment_tx == '' or not handle_payment(payment_tx, env):
                 return send_response({
@@ -116,6 +133,7 @@ def application(env: dict, start_response):
 
 
 def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
+    logging.debug('call_xrfunc_namesp: {} token: {} xrfunc: {} env: {}'.format(namesp,token,xrfunc,env))
     is_xrouter_plugin = namesp == 'xrs'
 
     # obtain host info
@@ -132,19 +150,25 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
         request_body_size = 0
 
     params = []
+    logging.debug('checking request_body_size')
     if request_body_size > 0:
         request_body = env.get('wsgi.input').read(request_body_size)
         if request_body != b'\n':
             try:
                 data = request_body.decode('utf8')
-                params += json.loads(data)
+                logging.debug('request_body_data: {}'.format(data))
+                params = json.loads(data)
+                logging.debug('params: {}'.format(params))
             except:
                 pass
 
     if is_xrouter_plugin:
+        logging.debug('is_xrouter_plugin: {}'.format(is_xrouter_plugin))
         if 'RPC_' + token + '_METHOD' in uwsgi.opt:
+            logging.debug('rpcmethod set')
             rpcmethod = uwsgi.opt.get('RPC_' + token + '_METHOD', b'').decode('utf8')
         elif 'URL_' + token + '_HOSTIP' in uwsgi.opt:
+            logging.debug('CALL_URL_is_xr_plugin_xrfunc: {} params: {} env: {}'.format(xrfunc,params,env))
             return call_url(xrfunc, params, env)
 
     if not rpchost or not rpcport or not rpcuser or not rpcpass or (is_xrouter_plugin and not rpcmethod):
@@ -450,6 +474,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
 
 
 def call_url(xrfunc: str, params: any, env: dict):
+    logging.debug('### call_url_params: {}'.format(params))
     rpchost = uwsgi.opt.get('URL_' + xrfunc + '_HOSTIP', b'').decode('utf8')
     rpcport = uwsgi.opt.get('URL_' + xrfunc + '_PORT', b'').decode('utf8')
     rpcurl = 'http://' + rpchost + ':' + rpcport + str(env.get('PATH_INFO', b''))
@@ -463,10 +488,12 @@ def call_url(xrfunc: str, params: any, env: dict):
     payload = '' if len(params) == 0 else json.dumps(params)
 
     try:
+        logging.debug('call_url payload: {} headers: {} rpcurl: {}'.format(payload,headers,rpcurl))
         res = requests.post(rpcurl, headers=headers, data=payload)
         try:
-            response = json.loads(res.content)
-            return parse_result(response)
+            logging.debug('call_url_post_response: {}'.format(res.text))
+            response = res.text
+            return response
         except:
             return res.content.decode('utf8')
     except:
