@@ -21,6 +21,8 @@ RUN apt update \
   && apt install -y --no-install-recommends \
      supervisor build-essential libssl-dev \
      python3-dev python3-pip python3-setuptools \
+     postgresql-dev \
+  && pip3 install psycopg2-binary \
   && pip3 install -r /opt/requirements.txt \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -128,7 +130,7 @@ user=root                                                                       
 nodaemon=true                                                                      \n\
                                                                                    \n\
 [program:uwsgi]                                                                    \n\
-command=/usr/local/bin/uwsgi --ini /opt/uwsgi/conf/uwsgi.ini --uid nginx --socket 127.0.0.1:8080 --master --chdir /opt/uwsgi --wsgi-file xrproxy.py --die-on-term \n\
+command=/usr/local/bin/uwsgi --ini /opt/uwsgi/conf/uwsgi.ini --uid nginx --socket 127.0.0.1:8080 --master --chdir /opt/uwsgi -w wsgi:app --die-on-term \n\
 stdout_logfile=/dev/stdout                                                         \n\
 stdout_logfile_maxbytes=0                                                          \n\
 stderr_logfile=/dev/stderr                                                         \n\
@@ -153,6 +155,9 @@ set-ph = SERVICENODE_PRIVKEY=                                                   
                                                                                    \n\
 # Set the chain to use (mainnet, testnet, regtest) defaults to mainnet             \n\
 #set-ph = BLOCKNET_CHAIN=mainnet                                                   \n\
+                                                                                   \n\
+# EXR plugins                                                                      \n\
+#set-ph = PLUGINS=eth_passthrough                                                  \n\
                                                                                    \n\
 # Optionally handle XRouter payments                                               \n\
 #set-ph = HANDLE_PAYMENTS=true                                                     \n\
