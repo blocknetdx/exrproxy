@@ -15,7 +15,7 @@ import exr
 app = Blueprint('xrouter', __name__)
 
 
-@app.route('/xr/<token>/<method>')
+@app.route('/xr/<token>/<method>', methods=['GET', 'POST', 'HEAD'])
 @exr.dec_check_token_method
 @exr.dec_handle_payment
 def xr(token, method):
@@ -23,7 +23,7 @@ def xr(token, method):
     return handle_request(request, exr.XR)
 
 
-@app.route('/xrs/<service>')
+@app.route('/xrs/<service>', methods=['GET', 'POST', 'HEAD'])
 @exr.dec_check_token_method
 @exr.dec_handle_payment
 def xrs(service):

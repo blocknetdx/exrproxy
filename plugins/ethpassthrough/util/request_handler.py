@@ -34,4 +34,11 @@ class RequestHandler:
                                      headers={
                                          'Content-Type': 'application/json'
                                      },
-                                     data=json.dumps(data)).json()
+                                     data=json.dumps(data), timeout=15).json()
+
+    def post_eth_proxy_project(self, host, data, project_id):
+        return self.session_eth.post('http://{}/xrs/eth_passthrough/{}'.format(host, project_id),
+                                     headers={
+                                         'Content-Type': 'application/json'
+                                     },
+                                     data=json.dumps(data), timeout=15).json()

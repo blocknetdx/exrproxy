@@ -6,7 +6,9 @@ import json
 import logging
 import os
 
+import requests
 from flask import Blueprint, Response, g, jsonify, request
+from requests.auth import HTTPDigestAuth
 
 from plugins.ethpassthrough.database.models import db_session, select, Project
 from plugins.ethpassthrough.util.middleware import authenticate
@@ -74,18 +76,28 @@ def handle_request(project_id):
         'API-TOKENS-REMAINING': g.project.api_token_count - g.project.used_api_tokens
     }
 
-    data = request.get_json()
-
     try:
+        data = make_jsonrpc_data(request.get_json())
+        if not data:
+            raise ValueError('failed to parse json data')
         method = data['method']
         params = data['params']
         logging.debug('Received Method: {}, Params: {}'.format(method, params))
+    except Exception as e:
+        logging.debug(e)
+        return Response(headers=headers, response=json.dumps({
+            'message': "malformed json post data",
+            'error': 1000
+        }))
 
-        response = req_handler.post_eth_proxy(method=method, params=params)
-        if type(response) == list:
-            response = response[0]
-
-        return Response(headers=headers, response=json.dumps(response))
+    try:
+        host = os.environ.get('ETH_HOST', 'http://localhost:8545')
+        eth_user = os.environ.get('ETH_HOST_USER', '')
+        eth_pass = os.environ.get('ETH_HOST_PASS', '')
+        headers = {'content-type': 'application/json'}
+        auth = HTTPDigestAuth(eth_user, eth_pass)
+        response = requests.post(host, headers=headers, data=json.dumps(data), auth=auth, timeout=15)
+        return Response(headers=headers, response=json.dumps(response.json()))
     except Exception as e:
         logging.debug(e)
         response = {
@@ -109,10 +121,61 @@ def eth_passthough_root():
 
 @app.route('/xrs/eth_passthrough', methods=['POST'])
 def request_project():
-    json_data = request.get_json(force=True)
+    try:
+        json_data = request.get_json(force=True)
+    except Exception as e:
+        logging.debug(e)
+        return bad_request_error('malformed json post data')
+
     if 'method' in json_data and json_data['method'] == 'request_project':
         project = req_handler.get_project()
         logging.info('Project Requested: {}'.format(project))
         return jsonify(project)
 
+    # Support XRouter calls to eth_passthrough. XRouter posts an array of parameters.
+    # The expected format for eth_passthrough is:
+    # [project_id, method, [parameters]]
+    # [string, string, list]
+    if isinstance(json_data, list) and len(json_data) == 3:
+        project_id = json_data[0]
+        if project_id is None or project_id is '':
+            return bad_request_error('Invalid project id')
+        data = make_jsonrpc_data(json_data)
+        if not data:
+            return bad_request_error('invalid post data')
+        return req_handler.post_eth_proxy_project(request.host, data, project_id)
+
     return eth_passthough_root()
+
+
+def make_jsonrpc_data(data: any):
+    """Parse json post data into required json-rpc object. This call also supports parsing
+    XRouter posted data into json-rpc."""
+    method = ''
+    params = []
+
+    # handle xrouter data
+    if isinstance(data, list):
+        if not data:
+            return None
+        # project_id = data[0]
+        method = data[1]
+        params = data[2]
+
+    # check if this is already a json-rpc obj
+    if 'jsonrpc' in data and 'method' in data and 'params' in data and 'id' in data:
+        return data
+
+    if 'method' in data and 'params' in data:
+        method = data['method']
+        params = data['params']
+
+    if not method:
+        return None
+
+    return {
+        "jsonrpc": "2.0",
+        "method": method,
+        "params": params,
+        "id": "exr"
+    }

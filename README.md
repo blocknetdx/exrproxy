@@ -231,7 +231,7 @@ uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app 
 
 *With eth_passthrough plugin enabled (requires postgresql)*
 ```
-DB_HOST=localhost DB_USERNAME=ethproxy DB_PASSWORD=password DB_DATABASE=eth uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app --virtualenv venv --honour-stdin --enable-threads --die-on-term
+DB_HOST=localhost DB_USERNAME=ethproxy DB_PASSWORD=password DB_DATABASE=eth ETH_HOST=localhost:8545 ETH_USER=test ETH_PASS=pass uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app --virtualenv venv --honour-stdin --enable-threads --die-on-term
 ```
 
 *Sample test_uwsgi.ini*
