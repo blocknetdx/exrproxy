@@ -17,8 +17,8 @@ app.register_blueprint(webapp)
 app.register_blueprint(xrouter.app)
 
 # debugging
-import pydevd_pycharm
-pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
+# import pydevd_pycharm
+# pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
 
 # logging
 LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
