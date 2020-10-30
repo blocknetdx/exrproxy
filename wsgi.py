@@ -32,8 +32,8 @@ def load_plugins():
     plugins = uwsgi.opt.get('PLUGINS', b'').decode('utf8').split(',')
     if 'eth_passthrough' in plugins:
         try:
-            from plugins import ethpassthrough
-            app.register_blueprint(ethpassthrough.app)
+            from plugins.ethpassthrough import routes
+            app.register_blueprint(routes.app)
         except Exception as e:
             logging.error('Failed to load eth_passthrough plugin: %s', getattr(e, 'message', repr(e)))
 
