@@ -83,6 +83,11 @@ def handle_request(project_id):
         method = data['method']
         params = data['params']
         logging.debug('Received Method: {}, Params: {}'.format(method, params))
+
+        env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS',
+                                                'eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
+        if method in set(env_disallowed_methods.split(',')):
+            return unauthorized_error(f'disallowed method {method}')
     except Exception as e:
         logging.debug(e)
         return Response(headers=headers, response=json.dumps({
