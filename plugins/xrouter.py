@@ -2,139 +2,58 @@
 # Distributed under the MIT software license, see the accompanying
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
-#!/usr/bin/env python3
-
-import bitcoin.core
-import bitcoin.signmessage
-import bitcoin.wallet
 import json
-import requests
-import threading
-import uwsgi
-from requests.auth import HTTPDigestAuth
 import logging
-import os
 
-# import pydevd_pycharm
-# pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
-# logging
-LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
-logging.basicConfig(level=LOGLEVEL,    #TODO: pull level from env
-                    format='%(asctime)s %(levelname)s - %(message)s',
-                    datefmt='[%Y-%m-%d:%H:%M:%S]')
+import requests
+import uwsgi
+from flask import Blueprint, g, request
+from requests.auth import HTTPDigestAuth
+
+import exr
+
+app = Blueprint('xrouter', __name__)
 
 
-logging.debug('### app start')
+@app.route('/xr/<token>/<method>', methods=['GET', 'POST', 'HEAD'])
+@exr.dec_check_token_method
+@exr.dec_handle_payment
+def xr(token, method):
+    logging.debug('xr handle request: %s %s', token, method)
+    return handle_request(request, exr.XR)
 
-def application(env: dict, start_response):
-    # Select chain
-    chain = uwsgi.opt.get('BLOCKNET_CHAIN', b'mainnet').decode('utf8').strip()
+
+@app.route('/xrs/<service>', methods=['GET', 'POST', 'HEAD'])
+@exr.dec_check_token_method
+@exr.dec_handle_payment
+def xrs(service):
+    logging.debug('xrs handle request: %s', service)
+    return handle_request(request, exr.XRS)
+
+
+def handle_request(req, namesp):
+    token = g.token
+    xrfunc = g.xrfunc
+
     try:
-        bitcoin.SelectParams(chain)
+        response = call_xrfunc(namesp, token, xrfunc, req.environ)
+        return exr.send_response(response, exr.config.get_snodekey())
     except ValueError as e:
-        print('Failed to parse BLOCKNET_CHAIN parameter, defaulting to mainnet: ' + getattr(e, 'message', repr(e)))
-        bitcoin.SelectParams('mainnet')
-
-    snodekey = bitcoin.wallet.CKey
-
-    # check snode key
-    snodekey_raw = uwsgi.opt.get('SERVICENODE_PRIVKEY', b'').decode('utf8').strip()
-    if not snodekey_raw:
-        return send_response({
-            'code': 1002,
-            'error': 'Internal Server Error: bad service node key'
-        }, snodekey, start_response)
-
-    try:
-        snodekey = bitcoin.wallet.CBitcoinSecret(snodekey_raw)
-    except bitcoin.wallet.CBitcoinSecretError as e:
-        print(getattr(e, 'message', repr(e)))
-        return send_response({
-            'code': 1002,
-            'error': 'Internal Server Error: bad service node key'
-        }, snodekey, start_response)
-
-    # parse the request path
-    request_path = str(env.get('PATH_INFO'))
-    paths = request_path.split('/')
-    logging.debug('paths: {}'.format(paths))
-    if len(paths) > 1:
-        del paths[0]
-
-    if len(paths) < 2:
-        return send_response({
-            'code': 1004,
-            'error': 'Bad request path ' + request_path + ' , The path must be in the format '
-                                                          '/xr/BLOCK/xrGetBlockCount'
-        }, snodekey, start_response)
-    elif len(paths) > 3:
-        return send_response({
-            'code': 1004,
-            'error': 'Bad request path ' + request_path + ' , The path must have a namespace, a method, '
-                                                          'and a token, for example: /xr/BLOCK/xrGetBlockCount'
-        }, snodekey, start_response)
-
-    namesp = paths[0]
-    token = ''
-    xrfunc = ''
-    if namesp == 'xr':
-        token = paths[1]
-        xrfunc = paths[2]
-    elif namesp == 'xrs':
-        xrfunc = paths[1]
-
-    logging.debug('token: {}'.format(token))
-
-    if not namesp or not xrfunc or (namesp == 'xr' and not token):
-        return send_response({
-            'code': 1004,
-            'error': 'Bad request path ' + request_path + ' , The path must have a namespace, a method, '
-                                                          'and a token, for example: /xr/BLOCK/xrGetBlockCount'
-        }, snodekey, start_response)
-
-    # if xrouter plugin, set token to xr func name
-    if namesp == 'xrs':
-        token = xrfunc
-        logging.debug('xrs token set value from xrfunc: {}'.format(token))
-
-
-    # if payment tx exists, process it in background
-    payment_tx = str(env.get('HTTP_XR_PAYMENT', ''))
-    
-    should_handle = payment_enforcement = uwsgi.opt.get('HANDLE_PAYMENTS_' + token, b'').decode('utf8').lower()
-    
-    logging.debug('paymentenforce: {}'.format(payment_enforcement))
-
-    if should_handle == 'true' or should_handle == '1':
-        if payment_enforcement == 'true' or payment_enforcement == '1':
-            if payment_tx == '' or not handle_payment(payment_tx, env):
-                return send_response({
-                    'code': 1028,
-                    'error': 'Bad request: bad or insufficient fee for ' + xrfunc + ' for token ' + token
-                }, snodekey, start_response)
-        else:
-            hp_thread = threading.Thread(target=handle_payment, args=(payment_tx, env))
-            hp_thread.start()
-
-    try:
-        response = call_xrfunc(namesp, token, xrfunc, env)
-        return send_response(response, snodekey, start_response)
-    except ValueError as e:
-        return send_response({
+        return exr.send_response({
             'code': 1002,
             'error': 'Internal Server Error: failed to call method ' + xrfunc + ' for token ' + token
                      + ' : ' + getattr(e, 'message', repr(e))
-        }, snodekey, start_response)
+        }, exr.config.get_snodekey())
     except:
-        return send_response({
+        return exr.send_response({
             'code': 1002,
             'error': 'Internal Server Error: failed to call method ' + xrfunc + ' for token ' + token
-        }, snodekey, start_response)
+        }, exr.config.get_snodekey())
 
 
 def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
-    logging.debug('call_xrfunc_namesp: {} token: {} xrfunc: {} env: {}'.format(namesp,token,xrfunc,env))
-    is_xrouter_plugin = namesp == 'xrs'
+    logging.debug('call_xrfunc_namesp: {} token: {} xrfunc: {} env: {}'.format(namesp, token, xrfunc, env))
+    is_xrouter_plugin = namesp == exr.XRS
 
     # obtain host info
     rpchost = uwsgi.opt.get('RPC_' + token + '_HOSTIP', b'').decode('utf8')
@@ -168,7 +87,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
             logging.debug('rpcmethod set')
             rpcmethod = uwsgi.opt.get('RPC_' + token + '_METHOD', b'').decode('utf8')
         elif 'URL_' + token + '_HOSTIP' in uwsgi.opt:
-            logging.debug('CALL_URL_is_xr_plugin_xrfunc: {} params: {} env: {}'.format(xrfunc,params,env))
+            logging.debug('CALL_URL_is_xr_plugin_xrfunc: {} params: {} env: {}'.format(xrfunc, params, env))
             return call_url(xrfunc, params, env)
 
     if not rpchost or not rpcport or not rpcuser or not rpcpass or (is_xrouter_plugin and not rpcmethod):
@@ -503,45 +422,6 @@ def call_url(xrfunc: str, params: any, env: dict):
         }
 
 
-def handle_payment(payment_tx: str, env: dict):
-    rpchost = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_HOSTIP', b'').decode('utf8')
-    rpcport = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_PORT', b'').decode('utf8')
-    rpcuser = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_USER', b'').decode('utf8')
-    rpcpass = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_PASS', b'').decode('utf8')
-    rpcver = uwsgi.opt.get('HANDLE_PAYMENTS_RPC_VER', b'1.0').decode('utf8')
-    rpcurl = 'http://' + rpcuser + ':' + rpcpass + '@' + rpchost + ':' + rpcport
-    if rpcuser == '' and rpcpass == '':  # if no rpc credentials
-        rpcurl = 'http://' + rpchost + ':' + rpcport
-
-    # client pubkey
-    client_pubkey = str(env.get('HTTP_XR_PUBKEY', b''))
-
-    params = [payment_tx]
-    headers = {'Content-Type': 'application/json'}
-    payload = json.dumps({
-        'id': 1,
-        'method': 'sendrawtransaction',
-        'params': params,
-        'jsonrpc': rpcver
-    })
-
-    try:
-        res = requests.post(rpcurl, headers=headers, data=payload)
-        enforce = uwsgi.opt.get('HANDLE_PAYMENTS_ENFORCE', b'false').decode('utf8')
-        # look for valid tx hash in response otherwise fail the check
-        if enforce is 'true' or enforce is '1':
-            payment_response = res.content.decode('utf8')
-            if len(payment_response) != 32 or 'error' in payment_response:
-                print('Failed to process payment from client: ' + client_pubkey
-                      + 'Error: ' + payment_response + ' tx hex: ' + payment_tx)
-                return False
-        print('Successfully processed payment from client: ' + client_pubkey + ' BLOCK tx: ' + payment_tx)
-        return True
-    except:
-        print('Failed to process payment from client: ' + client_pubkey + ' BLOCK tx: ' + payment_tx)
-        return False
-
-
 def parse_result(res: any):
     if 'result' in res and res['result']:
         return res['result']
@@ -592,22 +472,3 @@ def xr_to_rpc(token: str, xr_func: str):
 
     return ''
 
-
-def send_response(result: any, snodekey: bitcoin.wallet.CKey, start_response):
-    headers = [('Content-Type', 'application/json')]
-    res_data = result.encode('utf8') if isinstance(result, str) else json.dumps(result).encode('utf8')
-
-    # sign the result data if the servicenode key is valid
-    try:
-        res_hash = bitcoin.core.Hash(bitcoin.core.serialize.BytesSerializer.serialize(res_data))
-        sig, i = snodekey.sign_compact(res_hash)
-        meta = 27 + i
-        if snodekey.is_compressed:
-            meta += 4
-        headers += [('XR-Pubkey', snodekey.pub.hex()),
-                    ('XR-Signature', bitcoin.core.b2x(bitcoin.signmessage._bchr(meta) + sig))]
-    except Exception as e:
-        print('Unknown signing error: ' + getattr(e, 'message', repr(e)))
-
-    start_response('200 OK', headers)
-    return res_data

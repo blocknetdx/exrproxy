@@ -24,8 +24,11 @@ threads = 2
 # DO NOT SHARE THIS KEY
 set-ph = SERVICENODE_PRIVKEY=cV1bo3ME3qvw9Sxzo72skbFsAQ6ihyT6F8VXMe8mzv6EJoqFVXMV
 
-#  mainnet or testnet
+# mainnet or testnet
 set-ph = BLOCKNET_CHAIN=testnet
+
+# Support local plugins
+#set-ph = PLUGINS=eth_passthrough
 
 # Handle XRouter payments
 set-ph = HANDLE_PAYMENTS=true
@@ -184,7 +187,16 @@ set-ph = HANDLE_PAYMENTS_RPC_PORT=41414
 set-ph = HANDLE_PAYMENTS_RPC_USER=user
 set-ph = HANDLE_PAYMENTS_RPC_PASS=pass
 set-ph = HANDLE_PAYMENTS_RPC_VER=2.0
-``` 
+```
+
+## EXR Passthrough plugin
+
+This enable the eth json-rpc passthrough plugin allowing the EXR snode to deliver free and paid calls to the eth backend.
+
+*In `/opt/uwsgiconf/uwsgi.ini`*
+```
+set-ph = PLUGINS=eth_passthrough
+```
 
 ## Docker
 
@@ -207,6 +219,37 @@ docker run -d --name=xrproxy -p 9090:80 -v=/opt/uwsgiconf:/opt/uwsgi/conf -v=/op
 
 ```
 docker build --build-arg cores=4 -t blocknetdx/exrproxy:latest . 
+```
+
+## Debugging
+
+### Local
+
+```
+uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app --virtualenv venv --honour-stdin --enable-threads --die-on-term
+```
+
+*With eth_passthrough plugin enabled (requires postgresql)*
+```
+DB_HOST=localhost DB_USERNAME=ethproxy DB_PASSWORD=password DB_DATABASE=eth ETH_HOST=localhost:8545 ETH_USER=test ETH_PASS=pass uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app --virtualenv venv --honour-stdin --enable-threads --die-on-term
+```
+
+*Sample test_uwsgi.ini*
+```
+[uwsgi]
+processes = 1
+threads = 1
+
+set-ph = SERVICENODE_PRIVKEY=cTXWkw5CnrLsmXqcM3pdynQRqLLiBQRVF9pgDaxH97KQteQ4cq3e
+set-ph = BLOCKNET_CHAIN=testnet
+#set-ph = PLUGINS=eth_passthrough
+
+set-ph = HANDLE_PAYMENTS=true
+set-ph = HANDLE_PAYMENTS_RPC_HOSTIP=localhost
+set-ph = HANDLE_PAYMENTS_RPC_PORT=41419
+set-ph = HANDLE_PAYMENTS_RPC_USER=test
+set-ph = HANDLE_PAYMENTS_RPC_PASS=pass
+set-ph = HANDLE_PAYMENTS_RPC_VER=2.0
 ```
 
 # License
@@ -233,4 +276,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```# updated
+```

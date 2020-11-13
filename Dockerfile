@@ -21,13 +21,13 @@ RUN apt update \
   && apt install -y --no-install-recommends \
      supervisor build-essential libssl-dev \
      python3-dev python3-pip python3-setuptools \
+     postgresql \
+  && pip3 install psycopg2-binary \
   && pip3 install -r /opt/requirements.txt \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Setup uwsgi dir and bitcoin lib
-RUN mkdir -p /opt/uwsgi/conf \
-  && git clone --depth 1 --branch blocknet https://github.com/blocknetdx/python-bitcoinlib.git \
-  && cp -r python-bitcoinlib/bitcoin /opt/uwsgi
+RUN mkdir -p /opt/uwsgi/conf
 
 ARG cores=1
 ENV ecores=$cores
@@ -128,7 +128,7 @@ user=root                                                                       
 nodaemon=true                                                                      \n\
                                                                                    \n\
 [program:uwsgi]                                                                    \n\
-command=/usr/local/bin/uwsgi --ini /opt/uwsgi/conf/uwsgi.ini --uid nginx --socket 127.0.0.1:8080 --master --chdir /opt/uwsgi --wsgi-file xrproxy.py --die-on-term \n\
+command=/usr/local/bin/uwsgi --ini /opt/uwsgi/conf/uwsgi.ini --uid nginx --socket 127.0.0.1:8080 --master --chdir /opt/uwsgi -w wsgi:app --die-on-term \n\
 stdout_logfile=/dev/stdout                                                         \n\
 stdout_logfile_maxbytes=0                                                          \n\
 stderr_logfile=/dev/stderr                                                         \n\
@@ -153,6 +153,9 @@ set-ph = SERVICENODE_PRIVKEY=                                                   
                                                                                    \n\
 # Set the chain to use (mainnet, testnet, regtest) defaults to mainnet             \n\
 #set-ph = BLOCKNET_CHAIN=mainnet                                                   \n\
+                                                                                   \n\
+# EXR plugins                                                                      \n\
+#set-ph = PLUGINS=eth_passthrough                                                  \n\
                                                                                    \n\
 # Optionally handle XRouter payments                                               \n\
 #set-ph = HANDLE_PAYMENTS=true                                                     \n\
@@ -180,7 +183,10 @@ set-ph = SERVICENODE_PRIVKEY=                                                   
 \n" > /opt/uwsgi/conf/uwsgi.ini
 
 # Python handler
-COPY xrproxy.py /opt/uwsgi/xrproxy.py
+COPY wsgi.py /opt/uwsgi/wsgi.py
+COPY bitcoin /opt/uwsgi/bitcoin/
+COPY exr /opt/uwsgi/exr/
+COPY plugins /opt/uwsgi/plugins/
 
 VOLUME ["/opt/uwsgi/conf", "/etc/nginx"]
 
