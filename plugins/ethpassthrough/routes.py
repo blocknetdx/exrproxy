@@ -124,7 +124,7 @@ def eth_passthough_root():
 <h1>eth_passthrough is supported on this host</h1>
 <div>
   To get started create a project:
-  curl -X POST -d \'{"id": curltest, "method": "request_project", "params": TBD}\' http://host:port/xrs/eth_passthrough 
+  curl -X POST -d \'{"id": 1, "method": "request_project", "params": []}\' http://host:port/xrs/eth_passthrough
 </div>
     '''
 
