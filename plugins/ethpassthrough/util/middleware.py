@@ -68,7 +68,7 @@ def authenticate(f):
     @wraps(f)
     @db_session
     def wrapper(*args, **kwargs):
-        logging.debug(request.headers.get('Api-Key'), request.view_args['project_id'])
+        logging.debug('%s %s', request.headers.get('Api-Key'), request.view_args['project_id'])
         if 'Api-Key' not in request.headers:
             return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
         if 'project_id' not in request.view_args:
