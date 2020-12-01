@@ -22,7 +22,7 @@ req_handler = RequestHandler()
 @app.errorhandler(400)
 def bad_request_error(error):
     response = jsonify({
-        'error': 'Bad Request'
+        'error': 'Bad Request ' + error
     })
     return response
 
@@ -77,18 +77,35 @@ def handle_request(project_id):
         'API-TOKENS-REMAINING': g.project.api_token_count - g.project.used_api_tokens
     }
 
+    data = []
+
     try:
-        data = util.make_jsonrpc_data(request.get_json())
+        req_data = request.get_json()
+        if not req_data:
+            return bad_request_error('missing parameters')
+
+        # Check if xrouter call (this only has a single request)
+        if util.is_xrouter_call(req_data):
+            data.append(util.make_jsonrpc_data(req_data))
+        else:  # Look for multiple requests (list of jsonrpc calls)
+            if isinstance(req_data, list):
+                for r in req_data:
+                    data.append(util.make_jsonrpc_data(r))
+            else:
+                data.append(util.make_jsonrpc_data(req_data))
         if not data:
             raise ValueError('failed to parse json data')
-        method = data['method']
-        params = data['params']
-        logging.debug('Received Method: {}, Params: {}'.format(method, params))
 
-        env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS',
-                                                'eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
-        if method in set(env_disallowed_methods.split(',')):
-            return unauthorized_error(f'disallowed method {method}')
+        # Check each json rpc call
+        for d in data:
+            method = d['method']
+            params = d['params']
+            logging.debug('Received Method: {}, Params: {}'.format(method, params))
+
+            env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS',
+                                                    'eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
+            if method in set(env_disallowed_methods.split(',')):
+                return unauthorized_error(f'disallowed method {method}')
     except Exception as e:
         logging.debug(e)
         return Response(headers=headers, response=json.dumps({
@@ -101,13 +118,19 @@ def handle_request(project_id):
         eth_user = os.environ.get('ETH_HOST_USER', '')
         eth_pass = os.environ.get('ETH_HOST_PASS', '')
         headers = {'content-type': 'application/json'}
+        results = []
+        # Make multiple requests to geth endpoint and store results
         if eth_user:  # only set auth params if defined
             auth = HTTPDigestAuth(eth_user, eth_pass)
-            response = requests.post(host, headers=headers, data=json.dumps(data), auth=auth, timeout=15)
+            for d in data:
+                response = requests.post(host, headers=headers, data=json.dumps(d), auth=auth, timeout=15)
+                results.append(response.json())
         else:
-            response = requests.post(host, headers=headers, data=json.dumps(data), timeout=15)
-
-        return Response(headers=headers, response=json.dumps(response.json()))
+            for d in data:
+                response = requests.post(host, headers=headers, data=json.dumps(d), timeout=15)
+                results.append(response.json())
+        # If only single result return obj instead of list
+        return Response(headers=headers, response=json.dumps(results if len(results) > 1 else results[0]))
     except Exception as e:
         logging.debug(e)
         response = {

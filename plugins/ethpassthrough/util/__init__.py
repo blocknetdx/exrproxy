@@ -43,3 +43,9 @@ def make_jsonrpc_data(data: any):
         "params": params,
         "id": "exr"
     }
+
+
+def is_xrouter_call(data: any):
+    if not data:
+        return False
+    return isinstance(data, list) and len(data) >= 2 and isinstance(data[0], str)
