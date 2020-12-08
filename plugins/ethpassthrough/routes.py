@@ -78,6 +78,7 @@ def handle_request(project_id):
     }
 
     data = []
+    batch = False
 
     try:
         req_data = request.get_json()
@@ -89,6 +90,7 @@ def handle_request(project_id):
             data.append(util.make_jsonrpc_data(req_data))
         else:  # Look for multiple requests (list of jsonrpc calls)
             if isinstance(req_data, list):
+                batch = True
                 for r in req_data:
                     data.append(util.make_jsonrpc_data(r))
             else:
@@ -129,8 +131,8 @@ def handle_request(project_id):
             for d in data:
                 response = requests.post(host, headers=headers, data=json.dumps(d), timeout=15)
                 results.append(response.json())
-        # If only single result return obj instead of list
-        return Response(headers=headers, response=json.dumps(results if len(results) > 1 else results[0]))
+        # If batch request return list
+        return Response(headers=headers, response=json.dumps(results if batch or len(results) > 1 else results[0]))
     except Exception as e:
         logging.debug(e)
         response = {
