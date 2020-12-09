@@ -17,6 +17,7 @@ class ApiError(IntEnum):
     PROJECT_EXPIRED = 4
     API_TOKENS_EXCEEDED = 5
     MISSING_PAYMENT = 6
+    API_KEY_DISABLED = 7
 
 
 def missing_keys():
@@ -52,6 +53,14 @@ def api_tokens_exceeded():
         'error': ApiError.API_TOKENS_EXCEEDED
     })
 
+    return response, 401
+
+
+def api_key_disabled():
+    response = jsonify({
+        'message': "API key is disabled",
+        'error': ApiError.API_KEY_DISABLED
+    })
     return response, 401
 
 
@@ -91,6 +100,9 @@ def authenticate(f):
 
         if project.used_api_tokens >= project.api_token_count:
             return api_tokens_exceeded()
+
+        if not project.active:
+            return api_key_disabled()
 
         g.project = project
 
