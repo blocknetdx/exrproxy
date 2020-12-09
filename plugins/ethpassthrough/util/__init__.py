@@ -2,6 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 import json
+import re
 
 
 def make_jsonrpc_data(data: any):
@@ -43,6 +44,20 @@ def make_jsonrpc_data(data: any):
         "params": params,
         "id": "exr"
     }
+
+
+def get_api_key(data: list) -> str:
+    """Returns the api key from the data parameter list."""
+    api_key = ''
+    if len(data) < 1:
+        return api_key
+    # Parse the api-key from the request (it's optional)
+    last_data = data[len(data) - 1]
+    if isinstance(last_data, str):
+        m = re.match('^\\s*(?:api-key|Api-Key)\\s*=\\s*([a-zA-Z0-9\\-_]+)\\s*$', last_data)
+        if m and len(m.groups()) == 1:
+            api_key = m.group(1)
+    return api_key
 
 
 def is_xrouter_call(data: any):

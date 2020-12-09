@@ -155,7 +155,7 @@ def eth_passthough_root():
 
 
 @app.route('/xrs/eth_passthrough', methods=['POST'])
-def request_project():
+def xrouter_call():
     try:
         json_data = request.get_json(force=True)
     except Exception as e:
@@ -171,14 +171,16 @@ def request_project():
     # The expected format for eth_passthrough is:
     # [string, string, string_json_array]
     # ["project_id", "method", "[parameters...]"]
-    if isinstance(json_data, list) and len(json_data) == 3:
+    if isinstance(json_data, list) and len(json_data) >= 3:
         project_id = json_data[0]
         if project_id is None or project_id is '':
             return bad_request_error('Invalid project id')
         data = util.make_jsonrpc_data(json_data)
         if not data:
             return bad_request_error('invalid post data')
-        return req_handler.post_eth_proxy_project(request.host, data, project_id)
+        # Check xrouter requests for api key
+        api_key = util.get_api_key(json_data)
+        return req_handler.post_eth_proxy_project(request.host, data, project_id, api_key)
 
     return eth_passthough_root()
 
