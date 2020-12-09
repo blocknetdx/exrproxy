@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+import threading
 
 import requests
 from flask import Blueprint, Response, g, jsonify, request
@@ -12,7 +13,7 @@ from requests.auth import HTTPDigestAuth
 
 from plugins.ethpassthrough import util
 from plugins.ethpassthrough.database.models import db_session, select, Project
-from plugins.ethpassthrough.util.middleware import authenticate
+from plugins.ethpassthrough.middleware import authenticate
 from plugins.ethpassthrough.util.request_handler import RequestHandler
 
 app = Blueprint('eth_passthrough', __name__)
@@ -131,6 +132,11 @@ def handle_request(project_id):
             for d in data:
                 response = requests.post(host, headers=headers, data=json.dumps(d), timeout=15)
                 results.append(response.json())
+
+        # Update api count in background
+        update_api_thread = threading.Thread(target=update_api_count, name="update_api_count", args=[project_id])
+        update_api_thread.start()
+
         # If batch request return list
         return Response(headers=headers, response=json.dumps(results if batch or len(results) > 1 else results[0]))
     except Exception as e:
@@ -139,7 +145,6 @@ def handle_request(project_id):
             'message': "An error has occurred!",
             'error': 1000
         }
-
         return Response(headers=headers, response=json.dumps(response), status=400)
 
 
@@ -183,4 +188,9 @@ def xrouter_call():
         return req_handler.post_eth_proxy_project(request.host, data, project_id, api_key)
 
     return eth_passthough_root()
+
+
+def update_api_count(project_id):
+    res = req_handler.post_update_api_count(project_id)
+    logging.debug('update_api_count {} {}'.format(project_id, res))
 

@@ -89,14 +89,8 @@ def authenticate(f):
             return api_error_msg('Project has expired. Please request a new project and api key',
                                  ApiError.PROJECT_EXPIRED)
 
-        if project.used_api_tokens is None:
-            project.used_api_tokens = 0
-
         if project.used_api_tokens >= project.api_token_count:
-            project.active = False
             return api_tokens_exceeded()
-
-        project.used_api_tokens += 1
 
         g.project = project
 

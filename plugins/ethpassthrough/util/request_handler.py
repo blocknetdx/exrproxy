@@ -23,3 +23,7 @@ class RequestHandler:
                                          'Api-Key': api_key,
                                      },
                                      data=json.dumps(data), timeout=15).json()
+
+    def post_update_api_count(self, project_id):
+        return self.session_payment.post('http://{}/{}/api_count'.format(self.payment_processor_host, project_id),
+                                         timeout=2)
