@@ -75,7 +75,6 @@ def api_error_msg(msg: str, code: ApiError):
 
 def authenticate(f):
     @wraps(f)
-    @db_session
     def wrapper(*args, **kwargs):
         logging.debug('%s %s', request.headers.get('Api-Key'), request.view_args['project_id'])
         if 'Api-Key' not in request.headers:
@@ -86,7 +85,9 @@ def authenticate(f):
         project_id = request.view_args['project_id']
         api_key = request.headers.get('Api-Key')
 
-        project = Project.get(name=project_id, api_key=api_key)
+        with db_session:
+            project = Project.get(name=project_id, api_key=api_key)
+
         if project is None:
             return project_not_exists()
 
