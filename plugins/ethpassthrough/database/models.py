@@ -20,6 +20,8 @@ class Project(db.Entity):
 
     active = Required(bool, sql_default=False)
 
+    useapikey = Required(bool, sql_default=True)
+
 
 class Payment(db.Entity):
     pending = Required(bool)
