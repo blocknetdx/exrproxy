@@ -18,12 +18,22 @@ class ApiError(IntEnum):
     API_TOKENS_EXCEEDED = 5
     MISSING_PAYMENT = 6
     API_KEY_DISABLED = 7
+    INVALID_API_KEY = 8
 
 
 def missing_keys():
     response = jsonify({
         'message': "API_KEY header missing or project-id missing",
         'error': ApiError.MISSING_KEYS
+    })
+
+    return response, 401
+
+
+def invalid_keys():
+    response = jsonify({
+        'message': "API_KEY value is invalid for project ID",
+        'error': ApiError.INVALID_API_KEY
     })
 
     return response, 401
@@ -77,16 +87,20 @@ def authenticate(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         logging.debug('%s %s', request.headers.get('Api-Key'), request.view_args['project_id'])
-        if 'Api-Key' not in request.headers:
-            return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
         if 'project_id' not in request.view_args:
             return api_error_msg('Missing project-id in url', ApiError.MISSING_PROJECT_ID)
 
         project_id = request.view_args['project_id']
-        api_key = request.headers.get('Api-Key')
 
         with db_session:
-            project = Project.get(name=project_id, api_key=api_key)
+            project = Project.get(name=project_id)
+
+        api_key = request.headers.get('Api-Key')
+
+        if 'Api-Key' not in request.headers and project.useapikey == True:
+            return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
+        elif api_key != project.api_key:
+            return api_error_msg('Invalid Api-Key', ApiError.INVALID_API_KEY)
 
         if project is None:
             return project_not_exists()
