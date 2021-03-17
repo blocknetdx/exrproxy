@@ -54,14 +54,38 @@ def all_projects():
         with db_session:
             query = select(p for p in Project)
 
-            results = [{
-                'name': p.name,
-                # 'api_key': p.api_key,
-                'api_token_count': p.api_token_count,
-                'used_api_tokens': p.used_api_tokens,
-                'expires': str(p.expires),
-                'active': p.active,
-            } for p in query]
+            # results = [{
+            #     'name': p.name,
+            #     # 'api_key': p.api_key,
+            #     'api_token_count': p.api_token_count,
+            #     'used_api_tokens': p.used_api_tokens,
+            #     'expires': str(p.expires),
+            #     'active': p.active,
+            # } for p in query]
+
+            #check bool useapikey
+            results = []
+            for p in query:
+                if p.useapikey == True:
+                    results.append(
+                        {
+                        'name':p.name,
+                        'api_key': p.api_key,
+                        'api_token_count': p.api_token_count,
+                        'used_api_tokens': p.used_api_tokens,
+                        'expires': str(p.expires),
+                        'active': p.active
+                        })
+                else:
+                    results.append(
+                        {
+                        'name':p.name,
+                        # 'api_key': p.api_key,
+                        'api_token_count': p.api_token_count,
+                        'used_api_tokens': p.used_api_tokens,
+                        'expires': str(p.expires),
+                        'active': p.active
+                        })
     except Exception as e:
         logging.error(e)
 
