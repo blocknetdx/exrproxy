@@ -95,10 +95,16 @@ def authenticate(f):
         with db_session:
             project = Project.get(name=project_id)
 
-        api_key = request.headers.get('Api-Key')
+        # api_key = request.headers.get('Api-Key')
+        api_key = ''
 
         if 'Api-Key' not in request.headers and project.useapikey == True:
             return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
+        elif project.useapikey == True:
+            if 'Api-Key' in request.headers:
+                api_key = request.headers.get('Api-Key')
+            else:
+                api_key = ''
         elif api_key != project.api_key:
             return api_error_msg('Invalid Api-Key', ApiError.INVALID_API_KEY)
 
