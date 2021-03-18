@@ -10,7 +10,7 @@ from plugins.ethpassthrough.database.db import db
 class Project(db.Entity):
     name = PrimaryKey(str)
 
-    api_key = Required(str)
+    api_key = Optional(str)
     api_token_count = Required(int)
     used_api_tokens = Optional(int, sql_default=0)
     archive_mode = Optional(bool, sql_default=False)
