@@ -76,6 +76,7 @@ def handle_request(project_id):
         'API-TOKENS': g.project.api_token_count,
         'API-TOKENS-USED': g.project.used_api_tokens,
         'API-TOKENS-REMAINING': g.project.api_token_count - g.project.used_api_tokens
+        'ARCHIVE-MODE': g.project.archive_mode
     }
 
     data = []
@@ -105,8 +106,12 @@ def handle_request(project_id):
             params = d['params']
             logging.debug('Received Method: {}, Params: {}'.format(method, params))
 
-            env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS',
-                                                    'eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
+            #archive_mode method check
+            archive_mode_disallowed_methods = os.environ.get('ARCHIVE_MODE_DISSALLOWED_METHODS','getBalance,getCode,getTransactionCount,getStorageAt,call')
+            if method in set(archive_mode_disallowed_methods.split(,)) and headers['ARCHIVE-MODE']==False:
+                return unauthorized_error(f'disallowed method {method} with archive_mode False')
+
+            env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS','eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
             if method in set(env_disallowed_methods.split(',')):
                 return unauthorized_error(f'disallowed method {method}')
     except Exception as e:
