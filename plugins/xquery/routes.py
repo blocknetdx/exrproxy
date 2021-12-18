@@ -75,13 +75,18 @@ def handle_request(path):
         }))
 
     try:
-        host = os.environ.get('XQUERY_HOST', 'http://localhost:9650')
+        host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
+        port = host.split(":")[-1]
         headers = {'content-type': 'application/json'}
         results = []
-        for d in data:
-            response = requests.post(host + '/' + path, headers=headers, data=json.dumps(d), timeout=15)
-            results.append(response.json())
-        # If batch request return list
+        if path.count("/") <= 1:
+            response = requests.get(host+'/help', timeout=15)
+            results.append(response.text().replace(f"localhost:{port}"),f"127.0.0.1/xrs/xquery/{path.replace('/','')}")
+        else:
+            for d in data:
+                response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, data=json.dumps(d), timeout=15)
+                results.append(response.json())
+            # If batch request return list
         return Response(headers=headers, response=json.dumps(results if batch or len(results) > 1 else results[0]))
     except Exception as e:
         logging.debug(e)
