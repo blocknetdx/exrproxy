@@ -45,16 +45,23 @@ def handle_request(path):
         host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
         port = host.split(":")[-1]
         headers = {'content-type': 'application/json'}
-        results = []
+        # results = []
         if path.count("/") <= 1:
-            response = requests.get(host+'/help', timeout=15)
-            results.append(response.text().replace(f"localhost:{port}"),f"127.0.0.1/xrs/xquery/{path.replace('/','')}")
-        
+            url = host+'/help'
+            print(url)
+            response = requests.get(url, timeout=15)
+            text = response.text()
+            text = text.replace(f"localhost:{port}"),f"127.0.0.1/xrs/xquery/{path.replace('/','')}"
+            return Response(headers=response.headers, response=text)
         elif 'help' not in path:
-            response = requests.get(host + '/' + '/'.join(path.split('/')[1::]), timeout=15)
+            url = host + '/' + '/'.join(path.split('/')[1::])
+            print(url)
+            response = requests.get(url, timeout=15)
             return Response(headers=response.headers, response=response.json())
         else:
-            response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, json=request.get_json(), timeout=15)
+            url = host + '/' + '/'.join(path.split('/')[1::])
+            print(url)
+            response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
             return Response(headers=response.headers, response=response.json())
     except Exception as e:
         print(e)
