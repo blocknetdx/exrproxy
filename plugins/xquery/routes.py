@@ -54,7 +54,7 @@ def handle_request(path):
             response = requests.get(host + '/' + '/'.join(path.split('/')[1::]), timeout=15)
             return Response(headers=response.headers, response=response.json())
         else:
-            response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, data=json.dumps(request.get_json()), timeout=15)
+            response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, json=request.get_json(), timeout=15)
             return Response(headers=response.headers, response=response.json())
     except Exception as e:
         logging.debug(e)
