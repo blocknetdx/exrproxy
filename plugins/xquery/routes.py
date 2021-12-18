@@ -57,8 +57,10 @@ def handle_request(path):
             response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, json=request.get_json(), timeout=15)
             return Response(headers=response.headers, response=response.json())
     except Exception as e:
+        print(e)
         logging.debug(e)
         response = {
+            'error': f"{e}"
             'message': "An error has occurred!",
             'error': 1000
         }
