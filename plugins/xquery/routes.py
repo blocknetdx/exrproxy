@@ -60,7 +60,7 @@ def handle_request(path):
         print(e)
         logging.debug(e)
         response = {
-            'error': f"{e}"
+            'error': f"{e}",
             'message': "An error has occurred!",
             'error': 1000
         }
