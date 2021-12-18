@@ -41,39 +41,6 @@ def unauthorized_error(error):
 @app.route('/xrs/xquery/<path:path>', methods=['POST'])
 def handle_request(path):
 
-    data = []
-    batch = False
-    try:
-        req_data = request.get_json()
-        if not req_data:
-            return bad_request_error('missing parameters')
-
-        # Check if xrouter call (this only has a single request)
-        if util.is_xrouter_call(req_data):
-            data.append(util.make_jsonrpc_data(req_data))
-        else:  # Look for multiple requests (list of jsonrpc calls)
-            if isinstance(req_data, list):
-                batch = True
-                for r in req_data:
-                    data.append(util.make_jsonrpc_data(r))
-            else:
-                data.append(util.make_jsonrpc_data(req_data))
-        if not data:
-            raise ValueError('failed to parse json data')
-
-        # Check each json rpc call
-        for d in data:
-            method = d['method']
-            params = d['params']
-            logging.debug('Received Method: {}, Params: {}'.format(method, params))
-
-    except Exception as e:
-        logging.debug(e)
-        return Response(response=json.dumps({
-            'message': "malformed json post data",
-            'error': 1000
-        }))
-
     try:
         host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
         port = host.split(":")[-1]
@@ -82,12 +49,13 @@ def handle_request(path):
         if path.count("/") <= 1:
             response = requests.get(host+'/help', timeout=15)
             results.append(response.text().replace(f"localhost:{port}"),f"127.0.0.1/xrs/xquery/{path.replace('/','')}")
+        
+        elif 'help' not in path:
+            response = requests.get(host + '/' + '/'.join(path.split('/')[1::]), timeout=15)
+            return Response(headers=response.headers, response=response.json())
         else:
-            for d in data:
-                response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, data=json.dumps(d), timeout=15)
-                results.append(response.json())
-            # If batch request return list
-        return Response(headers=headers, response=json.dumps(results if batch or len(results) > 1 else results[0]))
+            response = requests.post(host + '/' + '/'.join(path.split('/')[1::]), headers=headers, data=json.dumps(request.get_json()), timeout=15)
+            return Response(headers=response.headers, response=response.json())
     except Exception as e:
         logging.debug(e)
         response = {
