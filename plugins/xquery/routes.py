@@ -5,14 +5,15 @@
 import json
 import logging
 import os
+import threading
 
 import requests
 from flask import Blueprint, Response, g, jsonify, request
-from plugins.xquery.middleware import authenticate
-# from plugins.xquery import util
+from plugins.ethpassthrough.middleware import authenticate
+from plugins.ethpassthrough.util.request_handler import RequestHandler
 
 app = Blueprint('xquery', __name__)
-
+req_handler = RequestHandler()
 
 @app.errorhandler(400)
 def bad_request_error(error):
@@ -38,19 +39,20 @@ def unauthorized_error(error):
     return response
 
 
-@app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'])
+@app.route('/xrs/xquery/<project_id>/', methods=['POST'], strict_slashes=False)
+@app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
 @authenticate
-def handle_request(project_id, path):
-
+def handle_request(project_id, path=None):
     try:
         host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
         port = host.split(":")[-1]
         headers = {'content-type': 'application/json'}
-        if path in ['help','help/']:
+        if path in ['help','help/'] or path==None:
             url = host+'/help'
             response = requests.get(url, timeout=15)
             text = response.text
             text = text.replace(f"localhost:{port}",f"127.0.0.1/xrs/xquery/{project_id}")
+            update_in_background_api_count(project_id)
             return Response(headers=response.headers.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + path
@@ -61,6 +63,7 @@ def handle_request(project_id, path):
             header['Content-Length']=len(resp)
             header['Keep-Alive']='timeout=15, max=100'
             header['Content-Encoding']='UTF-8'
+            update_in_background_api_count(project_id)
             return Response(headers=header.items(), response=resp)
         else:
             url = host + '/' + path
@@ -71,9 +74,11 @@ def handle_request(project_id, path):
                 header['Content-Type']='application/json'
                 header['Content-Length']=len(resp)
                 header['Keep-Alive']='timeout=15, max=100'
+                update_in_background_api_count(project_id)
                 return Response(headers=header.items(), response=resp)
             else:
                 resp = response.text
+                update_in_background_api_count(project_id)
                 return Response(headers=headers.items(), response=resp)
     except Exception as e:
         logging.debug(e)
@@ -91,4 +96,12 @@ def xquery_root():
 <h1>xquery is supported on this host</h1>
     '''
 
+
+def update_in_background_api_count(project_id):
+    update_api_thread = threading.Thread(target=update_api_count, name="update_api_count", args=[project_id])
+    update_api_thread.start()
+
+def update_api_count(project_id):
+    res = req_handler.post_update_api_count(project_id)
+    logging.debug('update_api_count {} {}'.format(project_id, res))
 
