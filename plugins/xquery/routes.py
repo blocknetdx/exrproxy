@@ -52,7 +52,6 @@ def handle_request(project_id, path=None):
             response = requests.get(url, timeout=15)
             text = response.text
             text = text.replace(f"localhost:{port}",f"127.0.0.1/xrs/xquery/{project_id}")
-            update_in_background_api_count(project_id)
             return Response(headers=response.headers.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + path
@@ -74,11 +73,9 @@ def handle_request(project_id, path=None):
                 header['Content-Type']='application/json'
                 header['Content-Length']=len(resp)
                 header['Keep-Alive']='timeout=15, max=100'
-                update_in_background_api_count(project_id)
                 return Response(headers=header.items(), response=resp)
             else:
                 resp = response.text
-                update_in_background_api_count(project_id)
                 return Response(headers=headers.items(), response=resp)
     except Exception as e:
         logging.debug(e)
