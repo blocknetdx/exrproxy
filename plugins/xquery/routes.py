@@ -45,29 +45,32 @@ def handle_request(path):
         host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
         port = host.split(":")[-1]
         headers = {'content-type': 'application/json'}
-        # results = []
-        if path.count("/") <= 1:
+        if path.count("/") <= 1 and 'help' in path:
             url = host+'/help'
-            print(url)
             response = requests.get(url, timeout=15)
-            text = response.text()
-            text = text.replace(f"localhost:{port}"),f"127.0.0.1/xrs/xquery/{path.replace('/','')}"
-            return Response(headers=response.headers, response=text)
+            text = response.text
+            text = text.replace(f"localhost:{port}",f"127.0.0.1/xrs/xquery/{path.split('/')[0]}")
+            return Response(headers=response.headers.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + '/'.join(path.split('/')[1::])
-            print(url)
-            response = requests.get(url, timeout=15)
-            return Response(headers=response.headers, response=response.json())
+            response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
+            return Response(headers=response.headers.items(), response=response.json())
         else:
             url = host + '/' + '/'.join(path.split('/')[1::])
-            print(url)
-            response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
-            return Response(headers=response.headers, response=response.json())
+            response = requests.get(url, timeout=15)
+            if 'help/graph' in path:
+                resp = json.dumps(response.json())
+                header = response.headers
+                header['Content-Type']='application/json'
+                header['Content-Length']=len(resp)
+                header['Keep-Alive']='timeout=15, max=100'
+                return Response(headers=header.items(), response=resp)
+            else:
+                resp = response.text
+                return Response(headers=headers.items(), response=resp)
     except Exception as e:
-        print(e)
         logging.debug(e)
         response = {
-            'error': f"{e}",
             'message': "An error has occurred!",
             'error': 1000
         }
