@@ -8,8 +8,8 @@ import os
 
 import requests
 from flask import Blueprint, Response, g, jsonify, request
-
-from plugins.xquery import util
+from plugins.xquery.middleware import authenticate
+# from plugins.xquery import util
 
 app = Blueprint('xquery', __name__)
 
@@ -38,21 +38,22 @@ def unauthorized_error(error):
     return response
 
 
-@app.route('/xrs/xquery/<path:path>', methods=['POST'])
-def handle_request(path):
+@app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'])
+@authenticate
+def handle_request(project_id, path):
 
     try:
         host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
         port = host.split(":")[-1]
         headers = {'content-type': 'application/json'}
-        if path.count("/") <= 1 and 'help' in path:
+        if path in ['help','help/']:
             url = host+'/help'
             response = requests.get(url, timeout=15)
             text = response.text
-            text = text.replace(f"localhost:{port}",f"127.0.0.1/xrs/xquery/{path.split('/')[0]}")
+            text = text.replace(f"localhost:{port}",f"127.0.0.1/xrs/xquery/{project_id}")
             return Response(headers=response.headers.items(), response=text)
         elif 'help' not in path:
-            url = host + '/' + '/'.join(path.split('/')[1::])
+            url = host + '/' + path
             response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
             resp = json.dumps(response.json())
             header = response.headers
@@ -62,7 +63,7 @@ def handle_request(path):
             header['Content-Encoding']='UTF-8'
             return Response(headers=header.items(), response=resp)
         else:
-            url = host + '/' + '/'.join(path.split('/')[1::])
+            url = host + '/' + path
             response = requests.get(url, timeout=15)
             if 'help/graph' in path:
                 resp = json.dumps(response.json())
@@ -77,6 +78,7 @@ def handle_request(path):
     except Exception as e:
         logging.debug(e)
         response = {
+            'exception': f'{e}',
             'message': "An error has occurred!",
             'error': 1000
         }
