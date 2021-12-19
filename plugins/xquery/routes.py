@@ -54,7 +54,13 @@ def handle_request(path):
         elif 'help' not in path:
             url = host + '/' + '/'.join(path.split('/')[1::])
             response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
-            return Response(headers=response.headers.items(), response=response.json())
+            resp = json.dumps(response.json())
+            header = response.headers
+            header['Content-Type']='application/json'
+            header['Content-Length']=len(resp)
+            header['Keep-Alive']='timeout=15, max=100'
+            header['Content-Encoding']='UTF-8'
+            return Response(headers=header.items(), response=resp)
         else:
             url = host + '/' + '/'.join(path.split('/')[1::])
             response = requests.get(url, timeout=15)
