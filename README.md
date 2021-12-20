@@ -6,6 +6,12 @@ The XRouter Proxy acts as a reverse proxy (similar to a load balancer) for all y
 
 In order for your requests to be properly validated by the XRouter network you will need to specify your Service Node's private key. Note* this is not a wallet private key and as a result no coin private keys should be used. This is a unique Service Node key that's not associated with any funds. **Do not specify any coin private keys in these configurations**. 
 
+## Autobuilder [currently in development]
+
+The Blocknet Autobuilder can be used to autoconfigure and create docker-compose.yaml:
+
+Preview: https://github.com/blocknetdx/exrproxy-env/tree/dev
+
 ## Quick setup
 
 XRouter Proxy is designed to work in docker a environment, although this is not a mandatory requirement. A `uwsgi.ini` configuration file is required to hook up the services and oracles that need to be exposed through the proxy.
