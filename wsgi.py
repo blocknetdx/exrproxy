@@ -37,6 +37,13 @@ def load_plugins():
         except Exception as e:
             logging.error('Failed to load eth_passthrough plugin: %s', getattr(e, 'message', repr(e)))
 
+    if 'xquery' in plugins:
+        try:
+            from plugins.xquery import routes
+            app.register_blueprint(routes.app)
+        except Exception as e:
+            logging.error('Failed to load xquery plugin: %s', getattr(e, 'message', repr(e)))
+
 
 # Set the bitcoin library parameters including chain and service node signing key.
 if __name__ == 'wsgi':

@@ -77,16 +77,21 @@ def authenticate(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         logging.debug('%s %s', request.headers.get('Api-Key'), request.view_args['project_id'])
-        if 'Api-Key' not in request.headers:
-            return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
+        if 'help' not in request.base_url:
+            if 'Api-Key' not in request.headers:
+                return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
         if 'project_id' not in request.view_args:
             return api_error_msg('Missing project-id in url', ApiError.MISSING_PROJECT_ID)
 
         project_id = request.view_args['project_id']
-        api_key = request.headers.get('Api-Key')
+        if 'help' not in request.base_url:
+            api_key = request.headers.get('Api-Key')
 
         with db_session:
-            project = Project.get(name=project_id, api_key=api_key)
+            if 'help' in request.base_url:
+                project = Project.get(name=project_id)
+            else:
+                project = Project.get(name=project_id, api_key=api_key)
 
         if project is None:
             return project_not_exists()
