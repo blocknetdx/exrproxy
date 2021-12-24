@@ -55,6 +55,9 @@ http {                                                                          
     #sendfile     on;                                                              \n\
     #gzip         on;                                                              \n\
     keepalive_timeout  300;                                                        \n\
+    uwsgi_read_timeout 300;                                                        \n\
+    uwsgi_send_timeout 300;                                                        \n\
+    uwsgi_connect_timeout 300;                                                     \n\
                                                                                    \n\
     log_format  main '\$remote_addr - \$remote_user [\$time_local] \"\$request\" ' \n\
                           '\$status \$body_bytes_sent \"\$http_referer\" '         \n\
@@ -90,6 +93,9 @@ http {                                                                          
             root               /opt/uwsgi;                                         \n\
             include            uwsgi_params;                                       \n\
             uwsgi_pass         uwsgicluster;                                       \n\
+            uwsgi_read_timeout 300;                                                \n\
+            uwsgi_send_timeout 300;                                                \n\
+            uwsgi_connect_timeout 300;                                             \n\
             proxy_redirect     off;                                                \n\
             proxy_set_header   Host \$host;                                        \n\
             proxy_set_header   X-Real-IP \$remote_addr;                            \n\
