@@ -14,7 +14,7 @@ class RequestHandler:
         self.payment_processor_host = os.environ.get('PAYMENT_PROCESSOR_HOST', 'localhost')
 
     def get_project(self):
-        return self.session_payment.get('http://{}/create_project'.format(self.payment_processor_host)).json()
+        return self.session_payment.get('http://{}/create_project'.format(self.payment_processor_host), timeout=300).json()
 
     def post_eth_proxy_project(self, host, data, project_id, api_key):
         return self.session_eth.post('http://{}/xrs/eth_passthrough/{}'.format(host, project_id),
@@ -22,8 +22,8 @@ class RequestHandler:
                                          'Content-Type': 'application/json',
                                          'Api-Key': api_key,
                                      },
-                                     data=json.dumps(data), timeout=15).json()
+                                     data=json.dumps(data), timeout=300).json()
 
     def post_update_api_count(self, project_id):
         return self.session_payment.post('http://{}/{}/api_count'.format(self.payment_processor_host, project_id),
-                                         timeout=2)
+                                         timeout=300)
