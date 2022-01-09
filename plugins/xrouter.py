@@ -343,6 +343,8 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
             pass
         if l_xr_method == 'xrgetblockhash':
             params[0] = int(params[0])
+        if l_xr_method == 'xrshowconfigs':
+            pass
         if l_xr_method == 'xrgetblock':
             pass
         if l_xr_method == 'xrgetblocks' or l_xr_method == 'xrgettransactions': # iterate over all ids
@@ -468,6 +470,7 @@ def xr_to_rpc(token: str, xr_func: str):
         if l_xr_method == 'xrgetblocks': return 'getblock'
         if l_xr_method == 'xrgettransaction': return 'getrawtransaction'
         if l_xr_method == 'xrgettransactions': return 'getrawtransaction'
+        if l_xr_method == 'xrshowconfigs': return 'xrshowconfigs'
         if l_xr_method == 'xrsendtransaction': return 'sendrawtransaction'
 
     return ''
