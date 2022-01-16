@@ -30,6 +30,15 @@ logging.basicConfig(level=LOGLEVEL,
 def load_plugins():
     """Load EXR plugins"""
     plugins = uwsgi.opt.get('PLUGINS', b'').decode('utf8').split(',')
+
+    if 'projects' in plugins:
+        try:
+            from plugins.projects import routes
+            app.register_blueprint(routes.app)
+        except Exception as e:
+            logging.error('Failed to load projects plugin: %s', getattr(e, 'message', repr(e)))
+
+
     if 'eth_passthrough' in plugins:
         try:
             from plugins.ethpassthrough import routes
