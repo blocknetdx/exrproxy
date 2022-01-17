@@ -42,10 +42,14 @@ def unauthorized_error(error):
 @app.route('/xrs/projects', methods=['HEAD', 'GET'])
 def projects_root():
     return '''
-<h1>eth_passthrough is supported on this host</h1>
+<h1>projects is supported on this host</h1>
 <div>
   To get started create a project:
-  curl -X POST -d \'{"id": 1, "method": "request_project", "params": []}\' http://host:port/xrs/eth_passthrough
+  curl -X POST -d \'{"id": 1, "method": "request_project", "params": []}\' http://host:port/xrs/projects
+</div>
+<div>
+  To list all projects:
+  curl -X POST -d \'{"id": 1, "method": "list_projects", "params": []}\' http://host:port/xrs/projects
 </div>
     '''
 

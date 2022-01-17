@@ -128,10 +128,6 @@ def handle_request(project_id):
 def eth_passthough_root():
     return '''
 <h1>eth_passthrough is supported on this host</h1>
-<div>
-  To get started create a project:
-  curl -X POST -d \'{"id": 1, "method": "request_project", "params": []}\' http://host:port/xrs/eth_passthrough
-</div>
     '''
 
 
