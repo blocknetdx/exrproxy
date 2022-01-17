@@ -44,30 +44,6 @@ def unauthorized_error(error):
     return response
 
 
-# @app.route('/all_projects', methods=['GET'])
-# def all_projects():
-#     if not os.environ.get('DEBUG', False):
-#         return Response({}, 401)
-
-#     results = []
-#     try:
-#         with db_session:
-#             query = select(p for p in Project)
-
-#             results = [{
-#                 'name': p.name,
-#                 # 'api_key': p.api_key,
-#                 'api_token_count': p.api_token_count,
-#                 'used_api_tokens': p.used_api_tokens,
-#                 'expires': str(p.expires),
-#                 'active': p.active,
-#             } for p in query]
-#     except Exception as e:
-#         logging.error(e)
-
-#     return jsonify(results)
-
-
 @app.route('/xrs/eth_passthrough/<project_id>', methods=['POST'])
 @authenticate
 def handle_request(project_id):
@@ -166,11 +142,6 @@ def xrouter_call():
     except Exception as e:
         logging.debug(e)
         return bad_request_error('malformed json post data')
-
-    # if 'method' in json_data and json_data['method'] == 'request_project':
-    #     project = req_handler.get_project()
-    #     logging.info('Project Requested: {}'.format(project))
-    #     return jsonify(project)
 
     # Support XRouter calls to eth_passthrough. XRouter posts an array of parameters.
     # The expected format for eth_passthrough is:
