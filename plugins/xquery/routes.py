@@ -9,8 +9,8 @@ import threading
 
 import requests
 from flask import Blueprint, Response, g, jsonify, request
-from plugins.ethpassthrough.middleware import authenticate
-from plugins.ethpassthrough.util.request_handler import RequestHandler
+from plugins.projects.middleware import authenticate
+from plugins.projects.util.request_handler import RequestHandler
 
 app = Blueprint('xquery', __name__)
 req_handler = RequestHandler()
