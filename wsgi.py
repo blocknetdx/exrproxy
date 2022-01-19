@@ -29,8 +29,8 @@ def load_plugins():
 
     for plugin in plugins:
         try:
-            routes = getattr(importlib.import_module(f"plugins.{plugin}"), "routes")
-            app.register_blueprint(routes.app)
+            plugin_app = getattr(importlib.import_module(f"plugins.{plugin}.routes"), "app")
+            app.register_blueprint(plugin_app)
         except Exception as e:
             logging.error(f'Failed to load {plugin} plugin: {e}')
 
