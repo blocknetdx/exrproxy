@@ -4,6 +4,7 @@
 
 import logging
 import os
+import importlib
 
 import uwsgi
 from flask import Flask
@@ -16,42 +17,22 @@ app = Flask('main')
 app.register_blueprint(webapp)
 app.register_blueprint(xrouter.app)
 
-# debugging
-# import pydevd_pycharm
-# pydevd_pycharm.settrace('localhost', port=4444, stdoutToServer=True, stderrToServer=True)
-
 # logging
 LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
 logging.basicConfig(level=LOGLEVEL,
                     format='%(asctime)s %(levelname)s - %(message)s',
                     datefmt='[%Y-%m-%d:%H:%M:%S]')
 
-
 def load_plugins():
     """Load EXR plugins"""
     plugins = uwsgi.opt.get('PLUGINS', b'').decode('utf8').split(',')
 
-    if 'projects' in plugins:
+    for plugin in plugins:
         try:
-            from plugins.projects import routes
+            routes = getattr(importlib.import_module(f"plugins.{plugin}"), "routes")
             app.register_blueprint(routes.app)
         except Exception as e:
-            logging.error('Failed to load projects plugin: %s', getattr(e, 'message', repr(e)))
-
-
-    if 'eth_passthrough' in plugins:
-        try:
-            from plugins.ethpassthrough import routes
-            app.register_blueprint(routes.app)
-        except Exception as e:
-            logging.error('Failed to load eth_passthrough plugin: %s', getattr(e, 'message', repr(e)))
-
-    if 'xquery' in plugins:
-        try:
-            from plugins.xquery import routes
-            app.register_blueprint(routes.app)
-        except Exception as e:
-            logging.error('Failed to load xquery plugin: %s', getattr(e, 'message', repr(e)))
+            logging.error(f'Failed to load {plugin} plugin: {e}')
 
 
 # Set the bitcoin library parameters including chain and service node signing key.
