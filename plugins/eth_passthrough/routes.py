@@ -11,10 +11,10 @@ import requests
 from flask import Blueprint, Response, g, jsonify, request
 from requests.auth import HTTPDigestAuth
 
-from plugins.ethpassthrough import util
+from plugins.eth_passthrough import util
 from plugins.projects.database.models import db_session, select, Project
 from plugins.projects.middleware import authenticate
-from plugins.ethpassthrough.util.request_handler import RequestHandler
+from plugins.eth_passthrough.util.request_handler import RequestHandler
 
 app = Blueprint('eth_passthrough', __name__)
 req_handler = RequestHandler()
