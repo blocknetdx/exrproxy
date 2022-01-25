@@ -162,7 +162,7 @@ set-ph = SERVICENODE_PRIVKEY=                                                   
 #set-ph = BLOCKNET_CHAIN=mainnet                                                   \n\
                                                                                    \n\
 # EXR plugins                                                                      \n\
-#set-ph = PLUGINS=eth_passthrough                                                  \n\
+#set-ph = PLUGINS=projects                                                         \n\
                                                                                    \n\
 # Optionally handle XRouter payments                                               \n\
 #set-ph = HANDLE_PAYMENTS=true                                                     \n\
