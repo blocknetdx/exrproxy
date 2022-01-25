@@ -34,7 +34,7 @@ set-ph = SERVICENODE_PRIVKEY=cV1bo3ME3qvw9Sxzo72skbFsAQ6ihyT6F8VXMe8mzv6EJoqFVXM
 set-ph = BLOCKNET_CHAIN=testnet
 
 # Support local plugins
-#set-ph = PLUGINS=eth_passthrough
+#set-ph = PLUGINS=evm_passthrough
 
 # Handle XRouter payments
 set-ph = HANDLE_PAYMENTS=true
@@ -201,7 +201,7 @@ This enable the eth json-rpc passthrough plugin allowing the EXR snode to delive
 
 *In `/opt/uwsgiconf/uwsgi.ini`*
 ```
-set-ph = PLUGINS=eth_passthrough
+set-ph = PLUGINS=evm_passthrough
 ```
 
 ## Docker
@@ -235,7 +235,7 @@ docker build --build-arg cores=4 -t blocknetdx/exrproxy:latest .
 uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app --virtualenv venv --honour-stdin --enable-threads --die-on-term
 ```
 
-*With eth_passthrough plugin enabled (requires postgresql)*
+*With evm_passthrough plugin enabled (requires postgresql)*
 ```
 DB_HOST=localhost DB_USERNAME=ethproxy DB_PASSWORD=password DB_DATABASE=eth ETH_HOST=localhost:8545 ETH_USER=test ETH_PASS=pass uwsgi --ini uwsgiconf/test_uwsgi.ini --protocol=http --socket :9090 -w wsgi:app --virtualenv venv --honour-stdin --enable-threads --die-on-term
 ```
@@ -248,7 +248,7 @@ threads = 1
 
 set-ph = SERVICENODE_PRIVKEY=cTXWkw5CnrLsmXqcM3pdynQRqLLiBQRVF9pgDaxH97KQteQ4cq3e
 set-ph = BLOCKNET_CHAIN=testnet
-#set-ph = PLUGINS=eth_passthrough
+#set-ph = PLUGINS=evm_passthrough
 
 set-ph = HANDLE_PAYMENTS=true
 set-ph = HANDLE_PAYMENTS_RPC_HOSTIP=localhost
