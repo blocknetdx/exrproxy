@@ -46,10 +46,10 @@ def unauthorized_error(error):
     return response
 
 
-
-@app.route('/xrs/evm_passthrough/<evm>/<project_id>', methods=['POST'])
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>/', methods=['POST'], strict_slashes=False)
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
 @authenticate
-def handle_request(evm, project_id):
+def handle_request(evm, project_id, path=None):
     headers = {
         'PROJECT-ID': project_id,
         'API-TOKENS': g.project.api_token_count,
@@ -103,12 +103,13 @@ def handle_request(evm, project_id):
             'error': 1000
         }))
 
-        # host = os.environ.get('ETH_HOST', 'http://localhost:8545')
-        # eth_user = os.environ.get('ETH_HOST_USER', '')
-        # eth_pass = os.environ.get('ETH_HOST_PASS', '')
         host = uwsgi.opt.get(f'{evm.upper()}_HOST_IP', b'localhost').decode('utf8')
         host_ip = uwsgi.opt.get(f'{evm.upper()}_HOST_PORT', b'8545').decode('utf8')
         host = 'http://'+host+':'+host_ip
+        if path and if path not in ['','/']:
+            if path[0] == '/':
+                path = path[1::]
+            host += f'/{path}'
         eth_user = uwsgi.opt.get(f'{evm.upper()}_HOST_USER', b'').decode('utf8')
         eth_pass = uwsgi.opt.get(f'{evm.upper()}_HOST_PASS', b'').decode('utf8')
         headers = {'content-type': 'application/json'}
