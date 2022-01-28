@@ -7,7 +7,7 @@ import logging
 from enum import IntEnum
 from functools import wraps
 from flask import g, request, jsonify
-from plugins.ethpassthrough.database.models import db_session, Project
+from plugins.projects.database.models import db_session, Project
 
 
 class ApiError(IntEnum):

@@ -6,17 +6,19 @@ import json
 import logging
 import os
 import threading
+import uwsgi
 
 import requests
 from flask import Blueprint, Response, g, jsonify, request
 from requests.auth import HTTPDigestAuth
 
-from plugins.ethpassthrough import util
-from plugins.ethpassthrough.database.models import db_session, select, Project
-from plugins.ethpassthrough.middleware import authenticate
-from plugins.ethpassthrough.util.request_handler import RequestHandler
 
-app = Blueprint('eth_passthrough', __name__)
+from plugins.evm_passthrough import util
+from plugins.projects.database.models import db_session, select, Project
+from plugins.projects.middleware import authenticate
+from plugins.evm_passthrough.util.request_handler import RequestHandler
+
+app = Blueprint('evm_passthrough', __name__)
 req_handler = RequestHandler()
 
 
@@ -44,33 +46,10 @@ def unauthorized_error(error):
     return response
 
 
-@app.route('/all_projects', methods=['GET'])
-def all_projects():
-    if not os.environ.get('DEBUG', False):
-        return Response({}, 401)
-
-    results = []
-    try:
-        with db_session:
-            query = select(p for p in Project)
-
-            results = [{
-                'name': p.name,
-                # 'api_key': p.api_key,
-                'api_token_count': p.api_token_count,
-                'used_api_tokens': p.used_api_tokens,
-                'expires': str(p.expires),
-                'active': p.active,
-            } for p in query]
-    except Exception as e:
-        logging.error(e)
-
-    return jsonify(results)
-
-
-@app.route('/xrs/eth_passthrough/<project_id>', methods=['POST'])
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>/', methods=['POST'], strict_slashes=False)
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
 @authenticate
-def handle_request(project_id):
+def handle_request(evm, project_id, path=None):
     headers = {
         'PROJECT-ID': project_id,
         'API-TOKENS': g.project.api_token_count,
@@ -104,9 +83,9 @@ def handle_request(project_id):
             method = d['method']
             params = d['params']
             logging.debug('Received Method: {}, Params: {}'.format(method, params))
-
-            env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS',
-                                                    'eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
+            env_disallowed_methods = uwsgi.opt.get('ETH_HOST_DISALLOWED_METHODS', b'eth_accounts,db_putString,db_getString,db_putHex,db_getHex').decode('utf8')
+            # env_disallowed_methods = os.environ.get('ETH_HOST_DISALLOWED_METHODS',
+            #                                         'eth_accounts,db_putString,db_getString,db_putHex,db_getHex')
             if method in set(env_disallowed_methods.split(',')):
                 return unauthorized_error(f'disallowed method {method}')
     except Exception as e:
@@ -117,9 +96,22 @@ def handle_request(project_id):
         }))
 
     try:
-        host = os.environ.get('ETH_HOST', 'http://localhost:8545')
-        eth_user = os.environ.get('ETH_HOST_USER', '')
-        eth_pass = os.environ.get('ETH_HOST_PASS', '')
+        evms = uwsgi.opt.get('HYDRA',b'').decode('utf8').split(',')
+        if evm.upper() not in evms:
+            return Response(headers=headers, response=json.dumps({
+            'message': f"{evm} not found in HYDRA configs",
+            'error': 1000
+        }))
+
+        host = uwsgi.opt.get(f'{evm.upper()}_HOST_IP', b'localhost').decode('utf8')
+        host_ip = uwsgi.opt.get(f'{evm.upper()}_HOST_PORT', b'8545').decode('utf8')
+        host = 'http://'+host+':'+host_ip
+        if path and if path not in ['','/']:
+            if path[0] == '/':
+                path = path[1::]
+            host += f'/{path}'
+        eth_user = uwsgi.opt.get(f'{evm.upper()}_HOST_USER', b'').decode('utf8')
+        eth_pass = uwsgi.opt.get(f'{evm.upper()}_HOST_PASS', b'').decode('utf8')
         headers = {'content-type': 'application/json'}
         results = []
         # Make multiple requests to geth endpoint and store results
@@ -148,18 +140,14 @@ def handle_request(project_id):
         return Response(headers=headers, response=json.dumps(response), status=400)
 
 
-@app.route('/xrs/eth_passthrough', methods=['HEAD', 'GET'])
-def eth_passthough_root():
+@app.route('/xrs/evm_passthrough', methods=['HEAD', 'GET'])
+def evm_passthough_root():
     return '''
-<h1>eth_passthrough is supported on this host</h1>
-<div>
-  To get started create a project:
-  curl -X POST -d \'{"id": 1, "method": "request_project", "params": []}\' http://host:port/xrs/eth_passthrough
-</div>
+<h1>evm_passthrough is supported on this host</h1>
     '''
 
 
-@app.route('/xrs/eth_passthrough', methods=['POST'])
+@app.route('/xrs/evm_passthrough', methods=['POST'])
 def xrouter_call():
     try:
         json_data = request.get_json(force=True)
@@ -167,13 +155,8 @@ def xrouter_call():
         logging.debug(e)
         return bad_request_error('malformed json post data')
 
-    if 'method' in json_data and json_data['method'] == 'request_project':
-        project = req_handler.get_project()
-        logging.info('Project Requested: {}'.format(project))
-        return jsonify(project)
-
-    # Support XRouter calls to eth_passthrough. XRouter posts an array of parameters.
-    # The expected format for eth_passthrough is:
+    # Support XRouter calls to evm_passthrough. XRouter posts an array of parameters.
+    # The expected format for evm_passthrough is:
     # [string, string, string_json_array]
     # ["project_id", "method", "[parameters...]"]
     if isinstance(json_data, list) and len(json_data) >= 3:

@@ -5,8 +5,7 @@
 import json
 import unittest
 
-from plugins.ethpassthrough.util import make_jsonrpc_data
-
+from plugins.evm_passthrough.util import make_jsonrpc_data
 
 class TestJsonParams(unittest.TestCase):
     def test_make_jsonrpc_data_xrouter(self):

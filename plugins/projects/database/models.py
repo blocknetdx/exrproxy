@@ -4,7 +4,7 @@
 
 from datetime import datetime
 from pony.orm import *
-from plugins.ethpassthrough.database.db import db
+from plugins.projects.database.db import db
 
 
 class Project(db.Entity):

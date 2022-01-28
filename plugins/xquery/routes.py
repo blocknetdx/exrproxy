@@ -6,11 +6,11 @@ import json
 import logging
 import os
 import threading
-
+import uwsgi
 import requests
 from flask import Blueprint, Response, g, jsonify, request
-from plugins.ethpassthrough.middleware import authenticate
-from plugins.ethpassthrough.util.request_handler import RequestHandler
+from plugins.projects.middleware import authenticate
+from plugins.projects.util.request_handler import RequestHandler
 
 app = Blueprint('xquery', __name__)
 req_handler = RequestHandler()
@@ -44,14 +44,15 @@ def unauthorized_error(error):
 @authenticate
 def handle_request(project_id, path=None):
     try:
-        host = os.environ.get('XQUERY_HOST', 'http://localhost:81')
-        port = host.split(":")[-1]
+        host_ip = uwsgi.opt.get('XQUERY_IP', b'localhost').decode('utf8')
+        host_port = uwsgi.opt.get('XQUERY_PORT', b'81').decode('utf8')
+        host = 'http://'+host_ip+':'+host_port
         headers = {'content-type': 'application/json'}
         if path in ['help','help/'] or path==None:
             url = host+'/help'
             response = requests.get(url, timeout=15)
             text = response.text
-            text = text.replace(f"localhost:{port}",f"127.0.0.1/xrs/xquery/{project_id}")
+            text = text.replace(f"localhost:{host_port}",f"127.0.0.1/xrs/xquery/{project_id}")
             return Response(headers=response.headers.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + path

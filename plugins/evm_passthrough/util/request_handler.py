@@ -17,7 +17,7 @@ class RequestHandler:
         return self.session_payment.get('http://{}/create_project'.format(self.payment_processor_host), timeout=300).json()
 
     def post_eth_proxy_project(self, host, data, project_id, api_key):
-        return self.session_eth.post('http://{}/xrs/eth_passthrough/{}'.format(host, project_id),
+        return self.session_eth.post('http://{}/xrs/evm_passthrough/{}'.format(host, project_id),
                                      headers={
                                          'Content-Type': 'application/json',
                                          'Api-Key': api_key,
