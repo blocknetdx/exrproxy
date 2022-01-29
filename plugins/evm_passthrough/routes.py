@@ -106,7 +106,7 @@ def handle_request(evm, project_id, path=None):
         host = uwsgi.opt.get(f'{evm.upper()}_HOST_IP', b'localhost').decode('utf8')
         host_ip = uwsgi.opt.get(f'{evm.upper()}_HOST_PORT', b'8545').decode('utf8')
         host = 'http://'+host+':'+host_ip
-        if path and if path not in ['','/']:
+        if path and path not in ['','/']:
             if path[0] == '/':
                 path = path[1::]
             host += f'/{path}'
