@@ -1,0 +1,35 @@
+version: '3'
+services:
+
+# proxy
+  proxy:
+    image: proxy:v1.0.0
+    ports:
+      - '80:80'
+      - '443:443'
+      - '7600:7600'
+      - '8000:8000'
+    volumes:
+      - /xrproxy/uwsgiconf:/opt/uwsgi/conf
+      - /xrproxy/nginxconfs:/etc/nginx
+      - /xrproxy/dhparams:/etc/pki/nginx
+      - /xrproxy/letsencrypt:/etc/letsencrypt
+      - /xrproxy/nginxlogs:/var/log/nginx
+    container_name: proxy
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "100m"
+
+# webserver
+  webserver:
+    image: webserver:v1.1.5
+    ports:
+      - '8192:8192'
+    volumes:
+      - /xrproxy/tmp:/xr-services/tmp
+    container_name: webserver
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "100m"
