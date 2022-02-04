@@ -11,8 +11,10 @@ import requests
 from flask import Blueprint, Response, g, jsonify, request
 from plugins.projects.middleware import authenticate
 from plugins.projects.util.request_handler import RequestHandler
+from plugins import limiter
 
 app = Blueprint('xquery', __name__)
+limiter.limit("50/minute;3000/hour;72000/day")(app)
 req_handler = RequestHandler()
 
 @app.errorhandler(400)
@@ -43,6 +45,12 @@ def unauthorized_error(error):
 @app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
 @authenticate
 def handle_request(project_id, path=None):
+    project_headers = {
+        'PROJECT-ID': project_id,
+        'API-TOKENS': str(g.project.api_token_count),
+        'API-TOKENS-USED': str(g.project.used_api_tokens),
+        'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens)
+    }
     try:
         host_ip = uwsgi.opt.get('XQUERY_IP', b'localhost').decode('utf8')
         host_port = uwsgi.opt.get('XQUERY_PORT', b'81').decode('utf8')
@@ -53,7 +61,7 @@ def handle_request(project_id, path=None):
             response = requests.get(url, timeout=15)
             text = response.text
             text = text.replace(f"localhost:{host_port}",f"127.0.0.1/xrs/xquery/{project_id}")
-            return Response(headers=response.headers.items(), response=text)
+            return Response(headers={**response.headers,**project_headers}.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + path
             response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
@@ -64,7 +72,7 @@ def handle_request(project_id, path=None):
             header['Keep-Alive']='timeout=15, max=100'
             header['Content-Encoding']='UTF-8'
             update_in_background_api_count(project_id)
-            return Response(headers=header.items(), response=resp)
+            return Response(headers={**header,**project_headers}.items(), response=resp)
         else:
             url = host + '/' + path
             response = requests.get(url, timeout=15)
@@ -74,10 +82,10 @@ def handle_request(project_id, path=None):
                 header['Content-Type']='application/json'
                 header['Content-Length']=len(resp)
                 header['Keep-Alive']='timeout=15, max=100'
-                return Response(headers=header.items(), response=resp)
+                return Response(headers={**header,**project_headers}.items(), response=resp)
             else:
                 resp = response.text
-                return Response(headers=headers.items(), response=resp)
+                return Response(headers={**headers,**project_headers}.items(), response=resp)
     except Exception as e:
         logging.debug(e)
         response = {
@@ -85,7 +93,7 @@ def handle_request(project_id, path=None):
             'message': "An error has occurred!",
             'error': 1000
         }
-        return Response(headers=headers, response=json.dumps(response), status=400)
+        return Response(headers={**headers,**project_headers}.items(), response=json.dumps(response), status=400)
 
 
 @app.route('/xrs/xquery', methods=['HEAD', 'GET'])
