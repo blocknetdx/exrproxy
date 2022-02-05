@@ -87,9 +87,8 @@ def handle_request(project_id, path=None):
                 resp = response.text
                 return Response(headers={**headers,**project_headers}.items(), response=resp)
     except Exception as e:
-        logging.debug(e)
+        logging.critical('Exception: ',exc_info=True)
         response = {
-            'exception': f'{e}',
             'message': "An error has occurred!",
             'error': 1000
         }

@@ -16,7 +16,7 @@ from requests.auth import HTTPDigestAuth
 from plugins.evm_passthrough import util
 from plugins.projects.database.models import db_session, select, Project
 from plugins.projects.middleware import authenticate
-from plugins.evm_passthrough.util.request_handler import RequestHandler
+from plugins.projects.util.request_handler import RequestHandler
 from plugins import limiter
 
 app = Blueprint('evm_passthrough', __name__)
