@@ -10,11 +10,11 @@ services:
       - '7600:7600'
       - '8000:8000'
     volumes:
-      - /xrproxy/uwsgiconf:/opt/uwsgi/conf
-      - /xrproxy/nginxconfs:/etc/nginx
-      - /xrproxy/dhparams:/etc/pki/nginx
-      - /xrproxy/letsencrypt:/etc/letsencrypt
-      - /xrproxy/nginxlogs:/var/log/nginx
+      - /home/aderks/api.maplenodes.com/uwsgiconf:/opt/uwsgi/conf
+      - /home/aderks/api.maplenodes.com/nginxconfs:/etc/nginx
+      - /home/aderks/api.maplenodes.com/dhparams:/etc/pki/nginx
+      - /home/aderks/api.maplenodes.com/letsencrypt:/etc/letsencrypt
+      - /home/aderks/api.maplenodes.com/nginxlogs:/var/log/nginx
     container_name: proxy
     restart: unless-stopped
     logging:
@@ -27,9 +27,10 @@ services:
     ports:
       - '8192:8192'
     volumes:
-      - /xrproxy/tmp:/xr-services/tmp
+      - /home/aderks/api.maplenodes.com/tmp:/xr-services/tmp
     container_name: webserver
     restart: unless-stopped
     logging:
       options:
         max-size: "100m"
+
