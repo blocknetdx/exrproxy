@@ -9,11 +9,11 @@ import requests
 import uwsgi
 from flask import Blueprint, g, request
 from requests.auth import HTTPDigestAuth
-
+from plugins import limiter
 import exr
 
 app = Blueprint('xrouter', __name__)
-
+limiter.limit("50/minute;3000/hour;72000/day")(app)
 
 @app.route('/xr/<token>/<method>', methods=['GET', 'POST', 'HEAD'])
 @exr.dec_check_token_method

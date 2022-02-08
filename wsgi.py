@@ -8,12 +8,13 @@ import importlib
 
 import uwsgi
 from flask import Flask
-
 import bitcoin.wallet
 from exr import config
 from plugins import app as webapp, xrouter
+from plugins import limiter
 
 app = Flask('main')
+limiter.init_app(app)
 app.register_blueprint(webapp)
 app.register_blueprint(xrouter.app)
 

@@ -3,8 +3,15 @@
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
 from flask import Blueprint
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(
+    key_func=get_remote_address
+)
+
 
 app = Blueprint('exr', __name__)
+limiter.limit("50/minute;3000/hour;72000/day")(app)
 
 
 @app.route('/', methods=['GET', 'POST', 'HEAD'])

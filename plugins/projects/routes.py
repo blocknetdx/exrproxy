@@ -10,8 +10,10 @@ import threading
 import requests
 from flask import Blueprint, jsonify, request 
 from plugins.projects.util.request_handler import RequestHandler
+from plugins import limiter
 
 app = Blueprint('projects', __name__)
+limiter.limit("50/minute;3000/hour;72000/day")(app)
 req_handler = RequestHandler()
 
 

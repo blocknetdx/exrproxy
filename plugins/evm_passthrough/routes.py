@@ -16,9 +16,11 @@ from requests.auth import HTTPDigestAuth
 from plugins.evm_passthrough import util
 from plugins.projects.database.models import db_session, select, Project
 from plugins.projects.middleware import authenticate
-from plugins.evm_passthrough.util.request_handler import RequestHandler
+from plugins.projects.util.request_handler import RequestHandler
+from plugins import limiter
 
 app = Blueprint('evm_passthrough', __name__)
+limiter.limit("50/minute;3000/hour;72000/day")(app)
 req_handler = RequestHandler()
 
 
@@ -50,11 +52,11 @@ def unauthorized_error(error):
 @app.route('/xrs/evm_passthrough/<evm>/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
 @authenticate
 def handle_request(evm, project_id, path=None):
-    headers = {
+    project_headers = {
         'PROJECT-ID': project_id,
-        'API-TOKENS': g.project.api_token_count,
-        'API-TOKENS-USED': g.project.used_api_tokens,
-        'API-TOKENS-REMAINING': g.project.api_token_count - g.project.used_api_tokens
+        'API-TOKENS': str(g.project.api_token_count),
+        'API-TOKENS-USED': str(g.project.used_api_tokens),
+        'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens)
     }
 
     data = []
@@ -90,7 +92,7 @@ def handle_request(evm, project_id, path=None):
                 return unauthorized_error(f'disallowed method {method}')
     except Exception as e:
         logging.debug(e)
-        return Response(headers=headers, response=json.dumps({
+        return Response(headers=project_headers, response=json.dumps({
             'message': "malformed json post data",
             'error': 1000
         }))
@@ -98,7 +100,7 @@ def handle_request(evm, project_id, path=None):
     try:
         evms = uwsgi.opt.get('HYDRA',b'').decode('utf8').split(',')
         if evm.upper() not in evms:
-            return Response(headers=headers, response=json.dumps({
+            return Response(headers=project_headers, response=json.dumps({
             'message': f"{evm} not found in HYDRA configs",
             'error': 1000
         }))
@@ -118,11 +120,11 @@ def handle_request(evm, project_id, path=None):
         if eth_user:  # only set auth params if defined
             auth = HTTPDigestAuth(eth_user, eth_pass)
             for d in data:
-                response = requests.post(host, headers=headers, data=json.dumps(d), auth=auth, timeout=15)
+                response = requests.post(host, headers={**headers,**project_headers}, data=json.dumps(d), auth=auth, timeout=15)
                 results.append(response.json())
         else:
             for d in data:
-                response = requests.post(host, headers=headers, data=json.dumps(d), timeout=15)
+                response = requests.post(host, headers={**headers,**project_headers}, data=json.dumps(d), timeout=15)
                 results.append(response.json())
 
         # Update api count in background
@@ -130,14 +132,23 @@ def handle_request(evm, project_id, path=None):
         update_api_thread.start()
 
         # If batch request return list
-        return Response(headers=headers, response=json.dumps(results if batch or len(results) > 1 else results[0]))
+        return Response(headers={**headers,**project_headers}, response=json.dumps(results if batch or len(results) > 1 else results[0]))
     except Exception as e:
         logging.debug(e)
         response = {
             'message': "An error has occurred!",
             'error': 1000
         }
-        return Response(headers=headers, response=json.dumps(response), status=400)
+        return Response(headers=project_headers, response=json.dumps(response), status=400)
+
+
+@app.route('/xrs/evm_passthrough/chains', methods=['GET'])
+def evm_passthough_chains():
+    evms = uwsgi.opt.get('HYDRA',b'').decode('utf8').split(',')
+    response = {
+    "evms": evms
+    }
+    return Response(response=json.dumps(response), status=200)
 
 
 @app.route('/xrs/evm_passthrough', methods=['HEAD', 'GET'])
