@@ -58,13 +58,13 @@ def handle_request(project_id, path=None):
         headers = {'content-type': 'application/json'}
         if path in ['help','help/'] or path==None:
             url = host+'/help'
-            response = requests.get(url, timeout=15)
+            response = requests.get(url, timeout=300)
             text = response.text
             text = text.replace(f"localhost:{host_port}",f"127.0.0.1/xrs/xquery/{project_id}")
             return Response(headers={**response.headers,**project_headers}.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + path
-            response = requests.post(url, headers=headers, json=request.get_json(), timeout=15)
+            response = requests.post(url, headers=headers, json=request.get_json(), timeout=300)
             resp = json.dumps(response.json())
             header = response.headers
             header['Content-Type']='application/json'
@@ -75,7 +75,7 @@ def handle_request(project_id, path=None):
             return Response(headers={**header,**project_headers}.items(), response=resp)
         else:
             url = host + '/' + path
-            response = requests.get(url, timeout=15)
+            response = requests.get(url, timeout=300)
             if 'help/graph' in path:
                 resp = json.dumps(response.json())
                 header = response.headers
