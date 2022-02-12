@@ -14,7 +14,7 @@ jobs:
       run: echo ${{ github.event.inputs.path }} ${{ github.event.inputs.image }} ${{ github.event.inputs.version }}
     - name: Get the version
       id: vars
-      run: echo ::set-output name=tag::$(echo ${GITHUB_REF:10})        
+      run: echo ::set-output name=tag::$(echo ${GITHUB_REF#refs/heads/})"      
     - name: build an image
       run: docker build . --file Dockerfile --tag blocknetdx/exrproxy:${{steps.vars.outputs.tag}}
     - name: push image
