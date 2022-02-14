@@ -20,8 +20,10 @@ jobs:
     - name: push image
       run: docker push blocknetdx/exrproxy:${{steps.vars.outputs.tag}}
     - name: build an image
+      if: github.ref == 'refs/heads/master'
       run: docker build . --file Dockerfile --tag blocknetdx/exrproxy:latest
     - name: push image
+      if: github.ref == 'refs/heads/master'
       run: docker push blocknetdx/exrproxy:latest
     - name: Remove dangling images
       if: ${{ always() }}
