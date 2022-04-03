@@ -148,7 +148,7 @@ def handle_payment(payment_tx: str, env: dict):
         res = requests.post(rpcurl, headers=headers, data=payload)
         enforce = uwsgi.opt.get('HANDLE_PAYMENTS_ENFORCE', b'false').decode('utf8')
         # look for valid tx hash in response otherwise fail the check
-        if enforce is 'true' or enforce is '1':
+        if enforce == 'true' or enforce == '1':
             payment_response = res.content.decode('utf8')
             if len(payment_response) != 32 or 'error' in payment_response:
                 logging.info('Failed to process payment from client: {} Error: {} tx hex: {}',
