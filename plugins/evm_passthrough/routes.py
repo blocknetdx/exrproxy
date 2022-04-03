@@ -172,7 +172,7 @@ def xrouter_call():
     # ["project_id", "method", "[parameters...]"]
     if isinstance(json_data, list) and len(json_data) >= 3:
         project_id = json_data[0]
-        if project_id is None or project_id is '':
+        if project_id == None or project_id == '':
             return bad_request_error('Invalid project id')
         data = util.make_jsonrpc_data(json_data)
         if not data:

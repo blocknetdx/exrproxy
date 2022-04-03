@@ -76,20 +76,27 @@ def api_error_msg(msg: str, code: ApiError):
 def authenticate(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        logging.debug('%s %s', request.headers.get('Api-Key'), request.view_args['project_id'])
-        if 'help' not in request.base_url:
+        logging.debug(f'{request.headers} {request.view_args["project_id"]}')
+        if 'help' not in request.base_url and 'evm_passthrough' not in request.base_url:
             if 'Api-Key' not in request.headers:
                 return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
         if 'project_id' not in request.view_args:
             return api_error_msg('Missing project-id in url', ApiError.MISSING_PROJECT_ID)
 
         project_id = request.view_args['project_id']
-        if 'help' not in request.base_url:
+        if 'help' not in request.base_url and 'evm_passthrough' not in request.base_url:
             api_key = request.headers.get('Api-Key')
 
         with db_session:
-            if 'help' in request.base_url:
-                project = Project.get(name=project_id)
+            if 'help' in request.base_url or 'evm_passthrough' in request.base_url:
+                if 'evm_passthrough' in request.base_url:
+                    if 'Api-Key' in request.headers:
+                        api_key = request.headers.get('Api-Key')
+                        project = Project.get(name=project_id, api_key=api_key)
+                    else:
+                        project = Project.get(name=project_id)    
+                else:
+                    project = Project.get(name=project_id)
             else:
                 project = Project.get(name=project_id, api_key=api_key)
 
