@@ -76,7 +76,7 @@ def api_error_msg(msg: str, code: ApiError):
 def authenticate(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        logging.debug(f'{request.headers} {request.view_args['project_id']}')
+        logging.debug(f'{request.headers} {request.view_args["project_id"]}')
         if 'help' not in request.base_url and 'evm_passthrough' not in request.base_url:
             if 'Api-Key' not in request.headers:
                 return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
