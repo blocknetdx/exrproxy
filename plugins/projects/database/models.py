@@ -1,4 +1,4 @@
-# Copyright (c) 2020 The Blocknet developers
+# Copyright (c) 2020-2022 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,6 +25,7 @@ class Payment(db.Entity):
     pending = Optional(bool)
     eth_address = Optional(str)
     avax_address = Optional(str)
+    sys_address = Optional(str)
 
     tier1_expected_amount = Optional(float)
     tier2_expected_amount = Optional(float)
@@ -32,11 +33,17 @@ class Payment(db.Entity):
     tier2_expected_amount_ablock = Optional(float)
     tier1_expected_amount_aablock = Optional(float)
     tier2_expected_amount_aablock = Optional(float)
+    tier1_expected_amount_sys = Optional(float)
+    tier2_expected_amount_sys = Optional(float)
+    tier1_expected_amount_sysblock = Optional(float)
+    tier2_expected_amount_sysblock = Optional(float)
 
     tx_hash = Optional(str)
     amount = Optional(float)
     amount_ablock = Optional(float)
     amount_aablock = Optional(float)
+    amount_sys = Optional(float)
+    amount_sysblock = Optional(float)
     start_time = Required(datetime)
 
     project = Required(Project, reverse='payments')

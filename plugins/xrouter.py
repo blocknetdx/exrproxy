@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 The Blocknet developers
+# Copyright (c) 2019-2022 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
@@ -112,7 +112,7 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
     l_xr_method = xrfunc.lower()
     l_token = token.lower()
 
-    if l_token == 'eth' or l_token == 'etc':
+    if l_token == 'eth' or l_token == 'etc' or l_token == 'nevm' or l_token == 'avax':
         if l_xr_method == 'xrdecoderawtransaction':
             pass
         if l_xr_method == 'xrgetblockcount':
@@ -435,7 +435,7 @@ def xr_to_rpc(token: str, xr_func: str):
     l_xr_method = xr_func.lower()
     l_token = token.lower()
 
-    if l_token == 'eth' or l_token == 'etc':
+    if l_token == 'eth' or l_token == 'etc' or l_token == 'avax' or l_token == 'nevm':
         if l_xr_method == 'xrdecoderawtransaction': return ''
         if l_xr_method == 'xrgetblockcount': return 'eth_blockNumber'
         if l_xr_method == 'xrgetblockhash': return 'eth_getBlockByNumber'
