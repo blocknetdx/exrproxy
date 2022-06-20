@@ -25,7 +25,7 @@ class Payment(db.Entity):
     pending = Optional(bool)
     eth_address = Optional(str)
     avax_address = Optional(str)
-    sys_address = Optional(str)
+    nevm_address = Optional(str)
 
     tier1_expected_amount = Optional(float)
     tier2_expected_amount = Optional(float)
