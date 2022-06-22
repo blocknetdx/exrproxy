@@ -33,8 +33,8 @@ class Payment(db.Entity):
     tier2_expected_amount_ablock = Optional(float)
     tier1_expected_amount_aablock = Optional(float)
     tier2_expected_amount_aablock = Optional(float)
-    tier1_expected_amount_sys = Optional(float)
-    tier2_expected_amount_sys = Optional(float)
+    tier1_expected_amount_wsys = Optional(float)
+    tier2_expected_amount_wsys = Optional(float)
     tier1_expected_amount_sysblock = Optional(float)
     tier2_expected_amount_sysblock = Optional(float)
 
@@ -42,7 +42,7 @@ class Payment(db.Entity):
     amount = Optional(float)
     amount_ablock = Optional(float)
     amount_aablock = Optional(float)
-    amount_sys = Optional(float)
+    amount_wsys = Optional(float)
     amount_sysblock = Optional(float)
     start_time = Required(datetime)
 
