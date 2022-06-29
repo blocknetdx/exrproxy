@@ -27,8 +27,8 @@ class Payment(db.Entity):
     avax_address = Optional(str)
     nevm_address = Optional(str)
 
-    tier1_expected_amount = Optional(float)
-    tier2_expected_amount = Optional(float)
+    tier1_expected_amount_eth = Optional(float)
+    tier2_expected_amount_eth = Optional(float)
     tier1_expected_amount_ablock = Optional(float)
     tier2_expected_amount_ablock = Optional(float)
     tier1_expected_amount_aablock = Optional(float)
@@ -39,7 +39,7 @@ class Payment(db.Entity):
     tier2_expected_amount_sysblock = Optional(float)
 
     tx_hash = Optional(str)
-    amount = Optional(float)
+    amount_eth = Optional(float)
     amount_ablock = Optional(float)
     amount_aablock = Optional(float)
     amount_wsys = Optional(float)
