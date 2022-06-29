@@ -50,7 +50,7 @@ def handle_request(project_id, path=None):
         'API-TOKENS': str(g.project.api_token_count),
         'API-TOKENS-USED': str(g.project.used_api_tokens),
         'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens),
-        'EXPIRY-DATE':str(g.project.expires)
+        'EXPIRATION-DATE':str(g.project.expires)
 
     }
     try:
