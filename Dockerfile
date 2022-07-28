@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 The Blocknet developers
+# Copyright (c) 2019-2022 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +6,7 @@
 # docker build --build-arg cores=8 --build-arg workerconns=2048 -t blocknetdx/exrproxy:latest .
 # docker run -d --name xrproxy -p 80:80 blocknetdx/exrproxy:latest
 
-FROM nginx
+FROM nginx:1.21.6
 
 RUN apt update \
   && apt install -y --no-install-recommends \
@@ -84,7 +84,7 @@ http {                                                                          
                                                                                    \n\
         # Proxying connections to application servers                              \n\
         location / {                                                               \n\
-                                                                                   \n\
+        #    return 404;                                                                       \n\
         }                                                                          \n\
                                                                                    \n\
         include /etc/nginx/conf.d/xcloud/*.conf;                                   \n\
