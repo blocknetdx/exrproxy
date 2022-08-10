@@ -13,6 +13,21 @@ from plugins.projects.middleware import authenticate
 from plugins.projects.util.request_handler import RequestHandler
 from plugins import limiter
 
+def externalIP():
+        try:
+                req = requests.get('http://checkip.amazonaws.com')
+                req = req.text
+                return req[:-1]
+        except Exception as e:
+                print(e)
+                try:
+                        req = requests.get('http://ifconfig.co')
+                        req = req.text.split('code')[3].split('>')[1].split('<')[0]
+                        return req
+                except Exception as e:
+                        print(e)
+                        return None
+
 app = Blueprint('xquery', __name__)
 limiter.limit("50/minute;3000/hour;72000/day")(app)
 req_handler = RequestHandler()
@@ -41,6 +56,7 @@ def unauthorized_error(error):
     return response
 
 
+@app.route('/xrs/xquery/<project_id>', methods=['POST'], strict_slashes=False)
 @app.route('/xrs/xquery/<project_id>/', methods=['POST'], strict_slashes=False)
 @app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
 @authenticate
@@ -61,8 +77,9 @@ def handle_request(project_id, path=None):
         if path in ['help','help/'] or path==None:
             url = host+'/help'
             response = requests.get(url, timeout=300)
-            text = response.text
-            text = text.replace(f"localhost:{host_port}",f"127.0.0.1/xrs/xquery/{project_id}")
+            text = response.text.replace('<PROJECT-ID>', project_id)
+            ext_IP = externalIP()
+            text = text.replace(f"localhost:{host_port}",f"{ext_IP}/xrs/xquery/{project_id}")
             return Response(headers={**response.headers,**project_headers}.items(), response=text)
         elif 'help' not in path:
             url = host + '/' + path
