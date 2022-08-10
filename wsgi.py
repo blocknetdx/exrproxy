@@ -29,6 +29,7 @@ def load_plugins():
     plugins = uwsgi.opt.get('PLUGINS', b'').decode('utf8').split(',')
 
     for plugin in plugins:
+        if 'evm_passthrough_' in plugin or 'xquery_' in plugin: continue # these are not real plugins
         try:
             plugin_app = getattr(importlib.import_module(f"plugins.{plugin}.routes"), "app")
             app.register_blueprint(plugin_app)
