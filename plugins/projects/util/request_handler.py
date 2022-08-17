@@ -24,8 +24,8 @@ class RequestHandler:
                                      },
                                      data=json.dumps(data), timeout=300).json()
 
-    def list_projects(self):
-        return self.session_payment.get('http://{}/list_projects'.format(self.payment_processor_host), timeout=300).json()
+#    def get_project_stats(self):
+#        return self.session_payment.get('http://{}/get_project_stats'.format(self.payment_processor_host), timeout=300).json()
 
     def post_update_api_count(self, project_id):
         return self.session_payment.post('http://{}/{}/api_count'.format(self.payment_processor_host, project_id),

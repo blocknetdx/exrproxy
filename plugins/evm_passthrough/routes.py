@@ -48,9 +48,9 @@ def unauthorized_error(error):
     return response
 
 
-@app.route('/xrs/evm_passthrough/<evm>/<project_id>', methods=['POST'], strict_slashes=False)
-@app.route('/xrs/evm_passthrough/<evm>/<project_id>/', methods=['POST'], strict_slashes=False)
-@app.route('/xrs/evm_passthrough/<evm>/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>', methods=['POST'])
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>/', methods=['POST'])
+@app.route('/xrs/evm_passthrough/<evm>/<project_id>/<path:path>', methods=['POST'])
 @authenticate
 def handle_request(evm, project_id, path=None):
     project_headers = {
@@ -58,7 +58,7 @@ def handle_request(evm, project_id, path=None):
         'API-TOKENS': str(g.project.api_token_count),
         'API-TOKENS-USED': str(g.project.used_api_tokens),
         'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens),
-        'EXPIRATION-DATE':str(g.project.expires)
+        'EXPIRATION-DATE': g.project.expires.strftime("%Y-%m-%d %H:%M:%S UTC")
     }
 
     data = []
@@ -160,31 +160,31 @@ def evm_passthough_root():
     '''
 
 
-@app.route('/xrs/evm_passthrough', methods=['POST'])
-def xrouter_call():
-    try:
-        json_data = request.get_json(force=True)
-    except Exception as e:
-        logging.debug(e)
-        return bad_request_error('malformed json post data')
-
-    # Support XRouter calls to evm_passthrough. XRouter posts an array of parameters.
-    # The expected format for evm_passthrough is:
-    # [string, string, string_json_array]
-    # ["project_id", "method", "[parameters...]"]
-    if isinstance(json_data, list) and len(json_data) >= 3:
-        project_id = json_data[0]
-        if project_id == None or project_id == '':
-            return bad_request_error('Invalid project id')
-        data = util.make_jsonrpc_data(json_data)
-        if not data:
-            return bad_request_error('invalid post data')
-        # Check xrouter requests for api key
-        api_key = util.get_api_key(json_data)
-        return req_handler.post_eth_proxy_project(request.host, data, project_id, api_key)
-
-    return eth_passthough_root()
-
+#@app.route('/xrs/evm_passthrough', methods=['POST'])
+#def xrouter_call():
+#    try:
+#        json_data = request.get_json(force=True)
+#    except Exception as e:
+#        logging.debug(e)
+#        return bad_request_error('malformed json post data')
+#
+#    # Support XRouter calls to evm_passthrough. XRouter posts an array of parameters.
+#    # The expected format for evm_passthrough is:
+#    # [string, string, string_json_array]
+#    # ["project_id", "method", "[parameters...]"]
+#    if isinstance(json_data, list) and len(json_data) >= 3:
+#        project_id = json_data[0]
+#        if project_id == None or project_id == '':
+#            return bad_request_error('Invalid project id')
+#        data = util.make_jsonrpc_data(json_data)
+#        if not data:
+#            return bad_request_error('invalid post data')
+#        # Check xrouter requests for api key
+#        api_key = util.get_api_key(json_data)
+#        return req_handler.post_eth_proxy_project(request.host, data, project_id, api_key)
+#
+#    return eth_passthough_root()
+#
 
 def update_api_count(project_id):
     res = req_handler.post_update_api_count(project_id)
