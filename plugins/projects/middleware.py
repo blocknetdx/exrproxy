@@ -7,7 +7,7 @@ import logging
 from enum import IntEnum
 from functools import wraps
 from flask import g, request, jsonify
-from plugins.projects.database.models import db_session, Project
+from plugins.projects.database.models import db_session, Project, Payment
 
 
 class ApiError(IntEnum):
@@ -18,6 +18,7 @@ class ApiError(IntEnum):
     API_TOKENS_EXCEEDED = 5
     MISSING_PAYMENT = 6
     API_KEY_DISABLED = 7
+    PAYMENT_DATA_NOT_FOUND = 8
 
 
 def missing_keys():
@@ -36,6 +37,15 @@ def project_not_exists():
     })
 
     return response, 401
+
+def payment_data_not_found():
+    response = jsonify({
+        'message': "Payment data not found",
+        'error': ApiError.PAYMENT_DATA_NOT_FOUND 
+    })
+
+    return response, 401
+
 
 
 def project_expired():
@@ -105,11 +115,11 @@ def authenticate(f):
 
         if not project.expires:
             return api_error_msg('Payment not received yet. Please submit payment or wait until payment confirms',
-                                 ApiError.MISSING_PAYMENT)
+                                ApiError.MISSING_PAYMENT)
 
         if datetime.datetime.now() > project.expires or not project.active:
             return api_error_msg('Project has expired. Please request a new project and api key',
-                                 ApiError.PROJECT_EXPIRED)
+                                ApiError.PROJECT_EXPIRED)
 
         if project.used_api_tokens >= project.api_token_count:
             return api_tokens_exceeded()
@@ -118,6 +128,33 @@ def authenticate(f):
             return api_key_disabled()
 
         g.project = project
+
+        return f(*args, **kwargs)
+    return wrapper
+
+def half_authenticate(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        logging.debug(f'{request.headers} {request.view_args["project_id"]}')
+        if 'Api-Key' not in request.headers:
+            return api_error_msg('Missing Api-Key header', ApiError.MISSING_API_KEY)
+        if 'project_id' not in request.view_args:
+            return api_error_msg('Missing project-id in url', ApiError.MISSING_PROJECT_ID)
+
+        project_id = request.view_args['project_id']
+        api_key = request.headers.get('Api-Key')
+
+        with db_session:
+           project = Project.get(name=project_id, api_key=api_key)
+           payment = Payment.get(project=project_id)
+
+        if project is None:
+            return project_not_exists()
+        if payment is None:
+            return payment_data_not_found()
+
+        g.project = project
+        g.payment = payment
 
         return f(*args, **kwargs)
     return wrapper

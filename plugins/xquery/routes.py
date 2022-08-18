@@ -56,9 +56,9 @@ def unauthorized_error(error):
     return response
 
 
-@app.route('/xrs/xquery/<project_id>', methods=['POST'], strict_slashes=False)
-@app.route('/xrs/xquery/<project_id>/', methods=['POST'], strict_slashes=False)
-@app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'], strict_slashes=False)
+@app.route('/xrs/xquery/<project_id>', methods=['POST'])
+@app.route('/xrs/xquery/<project_id>/', methods=['POST'])
+@app.route('/xrs/xquery/<project_id>/<path:path>', methods=['POST'])
 @authenticate
 def handle_request(project_id, path=None):
     project_headers = {
@@ -66,8 +66,7 @@ def handle_request(project_id, path=None):
         'API-TOKENS': str(g.project.api_token_count),
         'API-TOKENS-USED': str(g.project.used_api_tokens),
         'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens),
-        'EXPIRATION-DATE':str(g.project.expires)
-
+        'EXPIRATION-DATE': g.project.expires.strftime("%Y-%m-%d %H:%M:%S UTC")
     }
     try:
         host_ip = uwsgi.opt.get('XQUERY_IP', b'localhost').decode('utf8')

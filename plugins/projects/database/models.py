@@ -19,10 +19,17 @@ class Project(db.Entity):
     payments = Set(lambda: Payment, reverse='project')
 
     active = Required(bool, sql_default=False)
+    user_cancelled = Required(bool, sql_default=False)
 
 
 class Payment(db.Entity):
     pending = Optional(bool)
+    eth_token = Optional(str)
+    eth_privkey = Optional(str)
+    avax_token = Optional(str)
+    avax_privkey = Optional(str)
+    nevm_token = Optional(str)
+    nevm_privkey = Optional(str)
     eth_address = Optional(str)
     avax_address = Optional(str)
     nevm_address = Optional(str)
