@@ -20,9 +20,12 @@ app.register_blueprint(xrouter.app)
 
 # logging
 LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
+#LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(level=LOGLEVEL,
                     format='%(asctime)s %(levelname)s - %(message)s',
                     datefmt='[%Y-%m-%d:%H:%M:%S]')
+
+UTXO_PLUGIN_METHODS = ['getutxos','getrawtransaction','getrawmempool','getblockcount','sendrawtransaction','gettransaction','getblock','getblockhash','heights','fees','getbalance','getaddresshistory','ping']
 
 def load_plugins():
     """Load EXR plugins"""
@@ -30,11 +33,14 @@ def load_plugins():
 
     for plugin in plugins:
         if 'evm_passthrough_' in plugin or 'xquery_' in plugin: continue # these are not real plugins
+        if plugin in UTXO_PLUGIN_METHODS: continue
+        logging.info(f'Attempting to load {plugin}...')
         try:
             plugin_app = getattr(importlib.import_module(f"plugins.{plugin}.routes"), "app")
             app.register_blueprint(plugin_app)
+            logging.info(f'Loaded {plugin} plugin successfully')
         except Exception as e:
-            logging.error(f'Failed to load {plugin} plugin: {e}')
+            logging.warning(f'Failed to load {plugin} plugin: {e}')
 
 
 # Set the bitcoin library parameters including chain and service node signing key.

@@ -65,8 +65,7 @@ def handle_request(project_id, path=None):
         'PROJECT-ID': project_id,
         'API-TOKENS': str(g.project.api_token_count),
         'API-TOKENS-USED': str(g.project.used_api_tokens),
-        'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens),
-        'EXPIRATION-DATE': g.project.expires.strftime("%Y-%m-%d %H:%M:%S UTC")
+        'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens)
     }
     try:
         host_ip = uwsgi.opt.get('XQUERY_IP', b'localhost').decode('utf8')

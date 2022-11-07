@@ -14,7 +14,7 @@ class ApiError(IntEnum):
     MISSING_API_KEY = 1
     MISSING_PROJECT_ID = 2
     PROJECT_NOT_EXIST = 3
-    PROJECT_EXPIRED = 4
+    PROJECT_NOT_SUPPORTED = 4
     API_TOKENS_EXCEEDED = 5
     MISSING_PAYMENT = 6
     API_KEY_DISABLED = 7
@@ -113,13 +113,21 @@ def authenticate(f):
         if project is None:
             return project_not_exists()
 
-        if not project.expires:
+        if 'evm_passthrough' in request.base_url and not project.hydra:
+            return api_error_msg(f"Project {project_id} doesn't support Hydra. Please use a project ID and api key which supports Hydra (/xrs/evm_passthrough) calls.",
+                                ApiError.PROJECT_NOT_SUPPORTED)
+
+        if 'xquery' in request.base_url and not project.xquery:
+            return api_error_msg(f"Project {project_id} doesn't support XQuery. Please use a project ID and api key which supports XQuery (/xrs/xquery) calls.",
+                                ApiError.PROJECT_NOT_SUPPORTED)
+ 
+        if not project.activated:
             return api_error_msg('Payment not received yet. Please submit payment or wait until payment confirms',
                                 ApiError.MISSING_PAYMENT)
 
-        if datetime.datetime.now() > project.expires or not project.active:
-            return api_error_msg('Project has expired. Please request a new project and api key',
-                                ApiError.PROJECT_EXPIRED)
+#        if datetime.datetime.now() > project.expires or not project.active:
+#            return api_error_msg('Project has expired. Please request a new project and api key',
+#                                ApiError.PROJECT_EXPIRED)
 
         if project.used_api_tokens >= project.api_token_count:
             return api_tokens_exceeded()

@@ -13,6 +13,8 @@ from plugins.projects.middleware import half_authenticate
 from plugins.projects.util.request_handler import RequestHandler
 from plugins import limiter
 
+quote_valid_hours = 1 # number of hours for which price quote given to client is valid; afterwhich, payments get half API calls
+
 app = Blueprint('projects', __name__)
 limiter.limit("50/minute;3000/hour;72000/day")(app)
 req_handler = RequestHandler()
@@ -67,7 +69,12 @@ def xrouter_call():
         return bad_request_error('malformed json post data')
 
     if 'method' in json_data and json_data['method'] == 'request_project':
-        project = req_handler.get_project()
+#        logging.warning('Project Requested json_data dump:')
+#        logging.warning(json_data)
+        params = []
+        if 'params' in json_data.keys():
+            params = json_data['params']
+        project = req_handler.get_project(params)
         logging.info('Project Requested: {}'.format(project))
         return jsonify(project)
     
@@ -76,19 +83,26 @@ def xrouter_call():
 @app.route('/xrs/projects/<project_id>', methods=['POST'])
 @app.route('/xrs/projects/<project_id>/', methods=['POST'])
 @half_authenticate
-def project_stats_call(project_id):
+def project_id_calls(project_id):
     try:
         json_data = request.get_json(force=True)
     except Exception as e:
         logging.debug(e)
         return bad_request_error('malformed json post data')
 
+    if 'method' in json_data and json_data['method'] == 'extend_project':
+#        logging.warning('Project Requested json_data dump:')
+#        logging.warning(json_data)
+        project = req_handler.extend_project(project_id)
+        logging.info('Project Extension Requested: {}'.format(project))
+        return jsonify(project)
+
     if 'method' in json_data and json_data['method'] == 'get_project_stats':
-        # Note: project.expires only evaluates to True if project was activated by full payment being received
         status = "user cancelled" if g.project.user_cancelled \
-            else "pending" if g.payment.pending and not g.project.active and datetime.datetime.now() < g.payment.start_time + datetime.timedelta(hours=1) \
-            else "active" if g.project.active and g.project.expires and g.project.used_api_tokens < g.project.api_token_count and datetime.datetime.now() <= g.project.expires \
-            else "inactive" if not g.project.active and g.project.expires and (g.project.used_api_tokens >= g.project.api_token_count or datetime.datetime.now() > g.project.expires) \
+            else "pending" if g.payment.pending and not g.project.active \
+            else "active-pending" if g.project.active and g.payment.pending \
+            else "active" if g.project.active \
+            else "inactive" if not g.project.active and g.project.activated \
             else "cancelled"
         project = {
             "error": 0,
@@ -96,33 +110,30 @@ def project_stats_call(project_id):
               {
                 "project_id": project_id,
                 "api_key": g.project.api_key,
+                "XQuery": g.project.xquery,
+                "Hydra": g.project.hydra,
+                "tier": 0 if not g.project.hydra else 2 if g.project.archive_mode else 1,
                 "status": status,
-                "tier": 0 if status == "pending" else 2 if g.project.archive_mode else 1,
-                "api_tokens": str(g.project.api_token_count) if g.project.expires else "N/A",
-                "api_tokens_used": str(g.project.used_api_tokens) if g.project.expires else "N/A",
-                "api_tokens_remaining": str(g.project.api_token_count - g.project.used_api_tokens) if g.project.expires else "N/A",
-                "expiry_time": (g.payment.start_time + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                "expiration_date": g.project.expires.strftime("%Y-%m-%d %H:%M:%S UTC") if g.project.expires else "N/A",
+                "api_tokens": str(g.project.api_token_count),
+                "api_tokens_used": str(g.project.used_api_tokens),
+                "api_tokens_remaining": str(g.project.api_token_count - g.project.used_api_tokens),
+                "quote_start_time": g.payment.quote_start_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                "quote_expiry_time": (g.payment.start_time + datetime.timedelta(hours=quote_valid_hours)).strftime("%Y-%m-%d %H:%M:%S UTC"),
                 "eth_address": str(g.payment.eth_address),
                 "avax_address": str(g.payment.avax_address),
                 "nevm_address": str(g.payment.nevm_address),
-                "tier1_expected_amount_eth": str(g.payment.tier1_expected_amount_eth),
-                "tier2_expected_amount_eth": str(g.payment.tier2_expected_amount_eth),
-                "tier1_expected_amount_ablock": str(g.payment.tier1_expected_amount_ablock),
-                "tier2_expected_amount_ablock": str(g.payment.tier2_expected_amount_ablock),
-                "tier1_expected_amount_aablock": str(g.payment.tier1_expected_amount_aablock),
-                "tier2_expected_amount_aablock": str(g.payment.tier2_expected_amount_aablock),
-                "tier1_expected_amount_sysblock": str(g.payment.tier1_expected_amount_sysblock),
-                "tier2_expected_amount_sysblock": str(g.payment.tier2_expected_amount_sysblock),
-                "tier1_expected_amount_wsys": str(g.payment.tier1_expected_amount_wsys),
-                "tier2_expected_amount_wsys": str(g.payment.tier2_expected_amount_wsys),
-                #"tx_hash": str(g.payment.tx_hash) if g.project.expires else "N/A",  # tx_hash is never set in eth-payment-processor!
-                "amount_eth": str(g.payment.amount_eth) if g.project.expires else "N/A",
-                "amount_ablock": str(g.payment.amount_ablock) if g.project.expires else "N/A",
-                "amount_aablock": str(g.payment.amount_aablock) if g.project.expires else "N/A",
-                "amount_sysblock": str(g.payment.amount_sysblock) if g.project.expires else "N/A",
-                "amount_wsys": str(g.payment.amount_wsys) if g.project.expires else "N/A",
-                "start_time": g.payment.start_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                "min_amount_eth": str(g.payment.min_amount_eth),
+                "min_amount_ablock": str(g.payment.min_amount_ablock),
+                "min_amount_avax": str(g.payment.min_amount_avax),
+                "min_amount_aablock": str(g.payment.min_amount_aablock),
+                "min_amount_sysblock": str(g.payment.min_amount_sysblock),
+                "min_amount_wsys": str(g.payment.min_amount_wsys),
+                "amount_eth": str(g.payment.amount_eth) if g.project.activated else "N/A",
+                "amount_ablock": str(g.payment.amount_ablock) if g.project.activated else "N/A",
+                "amount_avax": str(g.payment.amount_avax) if g.project.activated else "N/A",
+                "amount_aablock": str(g.payment.amount_aablock) if g.project.activated else "N/A",
+                "amount_sysblock": str(g.payment.amount_sysblock) if g.project.activated else "N/A",
+                "amount_wsys": str(g.payment.amount_wsys) if g.project.activated else "N/A"
               }
         }
         logging.info('Project Stats: {}'.format(project))
