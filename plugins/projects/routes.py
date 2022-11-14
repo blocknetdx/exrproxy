@@ -118,7 +118,7 @@ def project_id_calls(project_id):
                 "api_tokens_used": str(g.project.used_api_tokens),
                 "api_tokens_remaining": str(g.project.api_token_count - g.project.used_api_tokens),
                 "quote_start_time": g.payment.quote_start_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
-                "quote_expiry_time": (g.payment.start_time + datetime.timedelta(hours=quote_valid_hours)).strftime("%Y-%m-%d %H:%M:%S UTC"),
+                "quote_expiry_time": (g.payment.quote_start_time + datetime.timedelta(hours=quote_valid_hours)).strftime("%Y-%m-%d %H:%M:%S UTC"),
                 "eth_address": str(g.payment.eth_address),
                 "avax_address": str(g.payment.avax_address),
                 "nevm_address": str(g.payment.nevm_address),
