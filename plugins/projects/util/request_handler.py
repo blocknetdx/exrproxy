@@ -37,4 +37,4 @@ class RequestHandler:
 
     def extend_project(self, project_id):
         return self.session_payment.post('http://{}/extend_project/{}'.format(self.payment_processor_host, project_id),
-                                         timeout=300)
+                                         timeout=300).json()
