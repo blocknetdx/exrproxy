@@ -100,7 +100,7 @@ def project_id_calls(project_id):
     if 'method' in json_data and json_data['method'] == 'get_project_stats':
         status = "user cancelled" if g.project.user_cancelled \
             else "pending" if g.payment.pending and not g.project.active \
-            else "active-pending" if g.project.active and g.payment.pending \
+            else "active_open" if g.project.active and g.payment.pending \
             else "active" if g.project.active \
             else "inactive" if not g.project.active and g.project.activated \
             else "cancelled"
