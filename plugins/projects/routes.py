@@ -54,7 +54,7 @@ def projects_root():
 </div>
 <div>
   <br>
-  To see more Project API calls, visit <a href="https://api.blocknet.co/#projects-api-xquery-hydra">https://api.blocknet.co/#projects-api-xquery-hydra</a>
+  To see more Project API calls, visit <a href="https://api.blocknet.org/#projects-api-xquery-hydra">https://api.blocknet.org/#projects-api-xquery-hydra</a>
 </div>
     '''
 
