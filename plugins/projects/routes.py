@@ -131,13 +131,13 @@ def project_id_calls(project_id):
                 "min_amount_avax": g.payment.min_amount_avax,
                 "min_amount_aablock": g.payment.min_amount_aablock,
                 "min_amount_sysblock": g.payment.min_amount_sysblock,
-                "min_amount_wsys": g.payment.min_amount_wsys,
+                "min_amount_sys": g.payment.min_amount_sys,
                 "amount_eth": g.payment.amount_eth,
                 "amount_ablock": g.payment.amount_ablock,
                 "amount_avax": g.payment.amount_avax,
                 "amount_aablock": g.payment.amount_aablock,
                 "amount_sysblock": g.payment.amount_sysblock,
-                "amount_wsys": g.payment.amount_wsys
+                "amount_sys": g.payment.amount_sys
               }
         }
         logging.info('Project Stats: {}'.format(project))
