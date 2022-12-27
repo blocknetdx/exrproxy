@@ -156,6 +156,7 @@ def evm_passthough_chains():
 def evm_passthough_root():
     return '''
 <h1>evm_passthrough is supported on this host</h1>
+See https://api.blocknet.org/#hydra-api for API usage.
     '''
 
 
