@@ -68,9 +68,9 @@ def handle_request(project_id, path=None):
             update_in_background_api_count(project_id)
             return Response(headers={**header,**project_headers}.items(), response=resp)
         else:
-            response_text = "Powered by:\n\n\thttps://blocknet.org\n\n\tSee https://api.blocknet.org/#xquery-api for API usage."
+            response_text = "Powered by:\n\n\thttps://blocknet.org\n\n\tSee https://api.blocknet.org/#xquery-api for API usage.\n\n"
             update_in_background_api_count(project_id)
-            return Response(headers={**response.headers,**project_headers}.items(), response=response_text)
+            return Response(headers={**project_headers}.items(), response=response_text)
     except Exception as e:
         logging.critical('Exception: ',exc_info=True)
         response = {
@@ -85,6 +85,7 @@ def xquery_root():
     return '''
 <h1>xquery is supported on this host</h1>
 See https://api.blocknet.org/#xquery-api for API usage.
+
 '''
 
 def update_in_background_api_count(project_id):
