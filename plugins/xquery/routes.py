@@ -13,21 +13,6 @@ from plugins.projects.middleware import authenticate
 from plugins.projects.util.request_handler import RequestHandler
 from plugins import limiter
 
-def externalIP():
-        try:
-                req = requests.get('http://checkip.amazonaws.com')
-                req = req.text
-                return req[:-1]
-        except Exception as e:
-                print(e)
-                try:
-                        req = requests.get('http://ifconfig.co')
-                        req = req.text.split('code')[3].split('>')[1].split('<')[0]
-                        return req
-                except Exception as e:
-                        print(e)
-                        return None
-
 app = Blueprint('xquery', __name__)
 limiter.limit("50/minute;3000/hour;72000/day")(app)
 req_handler = RequestHandler()
@@ -68,20 +53,12 @@ def handle_request(project_id, path=None):
         'API-TOKENS-REMAINING': str(g.project.api_token_count - g.project.used_api_tokens)
     }
     try:
-        host_ip = uwsgi.opt.get('XQUERY_IP', b'localhost').decode('utf8')
-        host_port = uwsgi.opt.get('XQUERY_PORT', b'81').decode('utf8')
-        host = 'http://'+host_ip+':'+host_port
+        host_ip = uwsgi.opt.get('HASURA_IP', b'localhost').decode('utf8')
+        host_port = uwsgi.opt.get('HASURA_PORT', b'8080').decode('utf8')
+        host = 'http://'+host_ip+':'+host_port+'/v1/graphql'
         headers = {'content-type': 'application/json'}
-        if path in ['help','help/'] or path==None:
-            url = host+'/help'
-            response = requests.get(url, timeout=300)
-            text = response.text.replace('<PROJECT-ID>', project_id)
-            ext_IP = externalIP()
-            text = text.replace(f"localhost:{host_port}",f"{ext_IP}/xrs/xquery/{project_id}")
-            return Response(headers={**response.headers,**project_headers}.items(), response=text)
-        elif 'help' not in path:
-            url = host + '/' + path
-            response = requests.post(url, headers=headers, json=request.get_json(), timeout=300)
+        if path in ['indexer','indexer/']:
+            response = requests.post(host, headers=headers, json=request.get_json(), timeout=300)
             resp = json.dumps(response.json())
             header = response.headers
             header['Content-Type']='application/json'
@@ -91,18 +68,9 @@ def handle_request(project_id, path=None):
             update_in_background_api_count(project_id)
             return Response(headers={**header,**project_headers}.items(), response=resp)
         else:
-            url = host + '/' + path
-            response = requests.get(url, timeout=300)
-            if 'help/graph' in path:
-                resp = json.dumps(response.json())
-                header = response.headers
-                header['Content-Type']='application/json'
-                header['Content-Length']=len(resp)
-                header['Keep-Alive']='timeout=15, max=100'
-                return Response(headers={**header,**project_headers}.items(), response=resp)
-            else:
-                resp = response.text
-                return Response(headers={**headers,**project_headers}.items(), response=resp)
+            response_text = "Powered by:\n\n\thttps://blocknet.org\n\n\tSee https://api.blocknet.org/#xquery-api for API usage.\n\n"
+            update_in_background_api_count(project_id)
+            return Response(headers={**project_headers}.items(), response=response_text)
     except Exception as e:
         logging.critical('Exception: ',exc_info=True)
         response = {
@@ -116,8 +84,9 @@ def handle_request(project_id, path=None):
 def xquery_root():
     return '''
 <h1>xquery is supported on this host</h1>
-    '''
+See https://api.blocknet.org/#xquery-api for API usage.
 
+'''
 
 def update_in_background_api_count(project_id):
     update_api_thread = threading.Thread(target=update_api_count, name="update_api_count", args=[project_id])
@@ -126,4 +95,3 @@ def update_in_background_api_count(project_id):
 def update_api_count(project_id):
     res = req_handler.post_update_api_count(project_id)
     logging.debug('update_api_count {} {}'.format(project_id, res))
-
