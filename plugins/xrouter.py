@@ -383,7 +383,10 @@ def call_xrfunc(namesp: str, token: str, xrfunc: str, env: dict):
     try:        
         res = requests.post(rpcurl, headers=headers, data=payload)
         try:
-            response = parse_result(json.loads(res.content))
+            if not is_xrouter_plugin:
+                    response = parse_result(json.loads(res.content))
+            else:
+                    response = json.loads(res.content)
             return response
         except ValueError:
             return res.content.decode('utf8')  # return raw string if json decode fails
