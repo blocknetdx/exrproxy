@@ -29,7 +29,7 @@ RUN apt update \
 # Setup uwsgi dir and bitcoin lib
 RUN mkdir -p /opt/uwsgi/conf
 
-ARG cores=1
+ARG cores=4
 ENV ecores=$cores
 ARG workerconns=1024
 ENV eworkerconns=$workerconns
@@ -54,10 +54,11 @@ http {                                                                          
     default_type  application/octet-stream;                                        \n\
     #sendfile     on;                                                              \n\
     #gzip         on;                                                              \n\
-    keepalive_timeout  300;                                                        \n\
-    proxy_read_timeout 300;                                                        \n\
-    proxy_send_timeout 300;                                                        \n\
-    proxy_connect_timeout 300;                                                     \n\
+    keepalive_timeout  65;                                                         \n\
+    proxy_read_timeout 65;                                                         \n\
+    proxy_send_timeout 65;                                                         \n\
+    proxy_connect_timeout 65;                                                      \n\
+    client_body_buffer_size 32k;                                                   \n\
                                                                                    \n\
     log_format  main '\$remote_addr - \$remote_user [\$time_local] \"\$request\" ' \n\
                           '\$status \$body_bytes_sent \"\$http_referer\" '         \n\
@@ -84,7 +85,7 @@ http {                                                                          
                                                                                    \n\
         # Proxying connections to application servers                              \n\
         location / {                                                               \n\
-        #    return 404;                                                                       \n\
+        #    return 404;                                                           \n\
         }                                                                          \n\
                                                                                    \n\
         include /etc/nginx/conf.d/xcloud/*.conf;                                   \n\
