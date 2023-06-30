@@ -5,9 +5,12 @@
 from flask import Blueprint
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-limiter = Limiter(
-    key_func=get_remote_address
-)
+
+def get_real_remote_address():
+    from flask import request
+    return request.headers.get('X-Forwarded-For') or request.remote_addr
+    
+limiter = Limiter(key_func=get_real_remote_address)
 
 
 app = Blueprint('exr', __name__)
